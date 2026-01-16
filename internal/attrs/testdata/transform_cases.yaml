@@ -1,0 +1,191 @@
+# no-cloc
+- name: non-string_value_unchanged
+  transformSpec: ""
+  input: 42
+  envVars: {}
+  want: 42
+  description: ""
+
+- name: map_value_unchanged
+  transformSpec: ""
+  input:
+    key: value
+  envVars: {}
+  want:
+    key: value
+  description: ""
+
+- name: uppercase_transform
+  transformSpec: "U"
+  input: "hello world"
+  envVars: {}
+  want: "HELLO WORLD"
+  description: ""
+
+- name: lowercase_transform
+  transformSpec: "l"
+  input: "HELLO WORLD"
+  envVars: {}
+  want: "hello world"
+  description: ""
+
+- name: uppercase_with_U
+  transformSpec: "U"
+  input: "hello"
+  envVars: {}
+  want: "HELLO"
+  description: ""
+
+- name: lowercase_with_L
+  transformSpec: "L"
+  input: "HELLO"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: last_case_transform_wins_-_lower
+  transformSpec: "Ul"
+  input: "Hello"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: last_case_transform_wins_-_upper
+  transformSpec: "lU"
+  input: "Hello"
+  envVars: {}
+  want: "HELLO"
+  description: ""
+
+- name: truncate_to_5_chars
+  transformSpec: "5"
+  input: "hello world"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: no_truncation_if_shorter
+  transformSpec: "20"
+  input: "hello"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: middle_ellipsis_with_negative
+  transformSpec: "-10"
+  input: "hello world today"
+  envVars: {}
+  want: "hell..oday"
+  description: ""
+
+- name: middle_ellipsis_calculation
+  transformSpec: "-8"
+  input: "hello world"
+  envVars: {}
+  want: "hel..rld"
+  description: ""
+
+- name: no_middle_ellipsis_if_shorter
+  transformSpec: "-20"
+  input: "hello"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: uppercase_and_truncate
+  transformSpec: "U10"
+  input: "hello world"
+  envVars: {}
+  want: "HELLO WORL"
+  description: ""
+
+- name: lowercase_and_truncate
+  transformSpec: "l5"
+  input: "HELLO"
+  envVars: {}
+  want: "hello"
+  description: ""
+
+- name: multiple_length_specs_-_last_wins
+  transformSpec: "10 5"
+  input: "hello world"
+  envVars: {}
+  want: "hello"
+  description: "when multiple length specs present, last one wins"
+
+- name: case_and_length_with_last_case_wins
+  transformSpec: "U10l"
+  input: "Hello World"
+  envVars: {}
+  want: "hello worl"
+  description: ""
+
+- name: time_transform_with_TZ_set
+  transformSpec: "t"
+  input: "2024-01-15T10:30:00Z"
+  envVars: {}
+  want: "DYNAMIC_LOCAL_TIME"
+  description: "Removed TZ dependency; validated in code-based test."
+
+- name: time_transform_without_TZ
+  transformSpec: "t"
+  input: "2024-01-15T10:30:00Z"
+  envVars: {}
+  want: "DYNAMIC_LOCAL_TIME"
+  description: "Removed pass-through expectation; uses system zone."
+
+- name: time_transform_with_T
+  transformSpec: "T"
+  input: "2024-01-15T10:30:00Z"
+  envVars: {}
+  want: "DYNAMIC_RELATIVE_TIME"
+  description: "Validated in code-based test due to variability."
+
+- name: invalid_time_format_unchanged
+  transformSpec: "t"
+  input: "not-a-time"
+  envVars: {}
+  want: "not-a-time"
+  description: ""
+
+- name: empty_spec_-_no_transform
+  transformSpec: ""
+  input: "hello world"
+  envVars: {}
+  want: "hello world"
+  description: ""
+
+- name: invalid_chars_in_spec_-_ignored
+  transformSpec: "("
+  input: "hello world"
+  envVars: {}
+  want: "hello world"
+  description: "invalid chars like ( are silently ignored"
+
+- name: unknown_letters_in_spec_-_ignored
+  transformSpec: "xyz"
+  input: "Hello World"
+  envVars: {}
+  want: "Hello World"
+  description: "only u/U/l/L/t/T and numbers are recognized"
+
+- name: special_chars_in_spec_-_ignored
+  transformSpec: "@#$%"
+  input: "test"
+  envVars: {}
+  want: "test"
+  description: ""
+
+- name: valid_mixed_with_invalid_-_valid_applied
+  transformSpec: "U(@xyz"
+  input: "hello"
+  envVars: {}
+  want: "HELLO"
+  description: "U is applied, invalid chars ignored"
+
+- name: number_with_invalid_chars_-_number_applied
+  transformSpec: "5abc"
+  input: "hello world"
+  envVars: {}
+  want: "hello"
+  description: "5 is extracted and applied, abc ignored"

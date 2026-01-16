@@ -1,0 +1,331 @@
+# no-cloc
+- name: simple_string_key
+  json:
+    name: test
+  path: name
+  expectedStr: test
+  isNil: false
+  isArray: false
+
+- name: simple_number_key
+  json:
+    count: 42
+  path: count
+  expectedStr: "42"
+  isNil: false
+  isArray: false
+
+- name: simple_boolean_key_true
+  json:
+    active: true
+  path: active
+  expectedStr: "true"
+  isNil: false
+  isArray: false
+
+- name: simple_boolean_key_false
+  json:
+    active: false
+  path: active
+  expectedStr: "false"
+  isNil: false
+  isArray: false
+
+- name: simple_null_key
+  json:
+    value: null
+  path: value
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: nested_single_level
+  json:
+    user:
+      name: alice
+  path: user.name
+  expectedStr: alice
+  isNil: false
+  isArray: false
+
+- name: nested_multiple_levels
+  json:
+    root:
+      sub:
+        deep: value
+  path: root.sub.deep
+  expectedStr: value
+  isNil: false
+  isArray: false
+
+- name: single_element_array_returns_element
+  json:
+    items:
+      - only
+  path: items
+  expectedStr: only
+  isNil: false
+  isArray: false
+
+- name: single_element_array_of_objects_drills_through
+  json:
+    items:
+      - id: first
+  path: items.id
+  expectedStr: first
+  isNil: false
+  isArray: false
+
+- name: multi_element_array_returns_array
+  json:
+    items:
+      - first
+      - second
+  path: items
+  expectedStr: ""
+  isNil: false
+  isArray: true
+
+- name: array_with_explicit_index_0
+  json:
+    items:
+      - first
+      - second
+      - third
+  path: items[0]
+  expectedStr: first
+  isNil: false
+  isArray: false
+
+- name: array_with_explicit_index_1
+  json:
+    items:
+      - first
+      - second
+      - third
+  path: items[1]
+  expectedStr: second
+  isNil: false
+  isArray: false
+
+- name: array_with_explicit_index_2
+  json:
+    items:
+      - first
+      - second
+      - third
+  path: items[2]
+  expectedStr: third
+  isNil: false
+  isArray: false
+
+- name: array_with_last_valid_index
+  json:
+    items:
+      - 10
+      - 20
+      - 30
+  path: items[2]
+  expectedStr: "30"
+  isNil: false
+  isArray: false
+
+- name: nested_object_with_array_access_explicit_index
+  json:
+    user:
+      tags:
+        - admin
+        - user
+  path: user.tags[0]
+  expectedStr: admin
+  isNil: false
+  isArray: false
+
+- name: nested_object_with_array_access_second_element
+  json:
+    user:
+      tags:
+        - admin
+        - user
+  path: user.tags[1]
+  expectedStr: user
+  isNil: false
+  isArray: false
+
+- name: single_element_array_of_objects_drills_through_property
+  json:
+    users:
+      - id: 1
+        name: alice
+  path: users.name
+  expectedStr: alice
+  isNil: false
+  isArray: false
+
+- name: array_of_objects_with_explicit_index
+  json:
+    users:
+      - id: 1
+        name: alice
+      - id: 2
+        name: bob
+  path: users[1].name
+  expectedStr: bob
+  isNil: false
+  isArray: false
+
+- name: array_of_objects_with_multiple_levels
+  json:
+    org:
+      teams:
+        - name: backend
+          lead:
+            name: alice
+  path: org.teams[0].lead.name
+  expectedStr: alice
+  isNil: false
+  isArray: false
+
+- name: key_with_hyphen
+  json:
+    my-key: value
+  path: my-key
+  expectedStr: value
+  isNil: false
+  isArray: false
+
+- name: key_with_underscore
+  json:
+    my_key: value
+  path: my_key
+  expectedStr: value
+  isNil: false
+  isArray: false
+
+- name: key_with_numbers
+  json:
+    key123: value
+  path: key123
+  expectedStr: value
+  isNil: false
+  isArray: false
+
+- name: nonexistent_key_returns_empty_result
+  json:
+    name: test
+  path: missing
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: invalid_array_index_returns_empty_result
+  json:
+    items:
+      - a
+      - b
+  path: items[10]
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: nested_missing_key_returns_empty_result
+  json:
+    user:
+      name: alice
+  path: user.missing
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: empty_object_returns_empty_result_for_any_key
+  json: {}
+  path: any
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: empty_array_with_index_returns_empty_result
+  json:
+    items: []
+  path: items[0]
+  expectedStr: ""
+  isNil: true
+  isArray: false
+
+- name: terraform_resource_attributes
+  json:
+    attributes:
+      aws_s3_bucket:
+        id: my-bucket
+  path: attributes.aws_s3_bucket.id
+  expectedStr: my-bucket
+  isNil: false
+  isArray: false
+
+- name: terraform_state_resources_array_with_explicit_index
+  json:
+    resources:
+      - type: aws_instance
+        name: web
+      - type: aws_vpc
+        name: main
+  path: resources[0].type
+  expectedStr: aws_instance
+  isNil: false
+  isArray: false
+
+- name: terraform_state_second_resource
+  json:
+    resources:
+      - type: aws_instance
+        name: web
+      - type: aws_vpc
+        name: main
+  path: resources[1].name
+  expectedStr: main
+  isNil: false
+  isArray: false
+
+- name: deeply_nested_terraform-like_structure
+  json:
+    root_module:
+      resources:
+        - type: aws_subnet
+          instances:
+            - attributes:
+                id: subnet-123
+  path: root_module.resources[0].instances[0].attributes.id
+  expectedStr: subnet-123
+  isNil: false
+  isArray: false
+
+- name: path_traversal_with_repeated_keys
+  json:
+    a:
+      b:
+        c:
+          value: found
+  path: a.b.c.value
+  expectedStr: found
+  isNil: false
+  isArray: false
+
+- name: array_element_explicit_index_then_nested_access
+  json:
+    data:
+      - nested:
+          value: test
+  path: data[0].nested.value
+  expectedStr: test
+  isNil: false
+  isArray: false
+
+- name: multi_element_array_access_without_index_returns_array
+  json:
+    data:
+      - value: first
+      - value: second
+  path: data
+  expectedStr: ""
+  isNil: false
+  isArray: true

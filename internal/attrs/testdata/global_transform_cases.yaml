@@ -1,0 +1,90 @@
+# no-cloc
+- name: no_global_transform
+  initial:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: "u"
+  wantSpecs:
+    - ""
+    - "u"
+  wantErr: false
+
+- name: global_uppercase
+  initial:
+    - key: "*"
+      outputKey: "*"
+      include: false
+      transformSpec: "U"
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: "l"
+  wantSpecs:
+    - "U,U"
+    - "U,"
+    - "U,l"
+  wantErr: false
+
+- name: global_with_length_transform
+  initial:
+    - key: "*"
+      outputKey: "*"
+      include: false
+      transformSpec: "10"
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+    - key: "attributes.title"
+      outputKey: "title"
+      include: true
+      transformSpec: "U"
+  wantSpecs:
+    - "10,10"
+    - "10,"
+    - "10,U"
+  wantErr: false
+
+- name: global_with_multiple_transforms
+  initial:
+    - key: "*"
+      outputKey: "*"
+      include: false
+      transformSpec: "U20"
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: "l"
+  wantSpecs:
+    - "U20,U20"
+    - "U20,"
+    - "U20,l"
+  wantErr: false
+
+- name: empty_list
+  initial: []
+  wantSpecs: []
+  wantErr: false
+
+- name: only_global_attr
+  initial:
+    - key: "*"
+      outputKey: "*"
+      include: false
+      transformSpec: "U"
+  wantSpecs:
+    - "U,U"
+  wantErr: false

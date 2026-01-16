@@ -1,0 +1,162 @@
+# no-cloc
+- name: empty_spec
+  spec: ""
+  delimiter: ""
+  want: null
+  wantCount: 0
+
+- name: single_exact_match_filter
+  spec: "name=my-resource"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "="
+      value: "my-resource"
+      negate: false
+  wantCount: 1
+
+- name: prefix_match_filter
+  spec: "type^aws_"
+  delimiter: ""
+  want:
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: false
+  wantCount: 1
+
+- name: regex_match_filter
+  spec: "tags~^env-"
+  delimiter: ""
+  want:
+    - key: "tags"
+      operand: "~"
+      value: "^env-"
+      negate: false
+  wantCount: 1
+
+- name: negated_exact_match
+  spec: "name!=test"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "="
+      value: "test"
+      negate: true
+  wantCount: 1
+
+- name: negated_prefix_match
+  spec: "type!^aws_"
+  delimiter: ""
+  want:
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: true
+  wantCount: 1
+
+- name: multiple_filters
+  spec: "name=test,type^aws_"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "="
+      value: "test"
+      negate: false
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: false
+  wantCount: 2
+
+- name: greater_than_numeric
+  spec: "count>5"
+  delimiter: ""
+  want:
+    - key: "count"
+      operand: ">"
+      value: "5"
+      negate: false
+  wantCount: 1
+
+- name: less_than_numeric
+  spec: "count<10"
+  delimiter: ""
+  want:
+    - key: "count"
+      operand: "<"
+      value: "10"
+      negate: false
+  wantCount: 1
+
+- name: contains_operand
+  spec: "name@test"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "@"
+      value: "test"
+      negate: false
+  wantCount: 1
+
+- name: regex_operand
+  spec: "name/^test.*"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "/"
+      value: "^test.*"
+      negate: false
+  wantCount: 1
+
+- name: key_without_operator_or_target
+  spec: "name=test,status,type^aws_"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "="
+      value: "test"
+      negate: false
+    - key: "status"
+      operand: ""
+      value: ""
+      negate: false
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: false
+  wantCount: 3
+
+- name: custom_delimiter
+  spec: "name=test|type^aws_"
+  delimiter: "|"
+  want:
+    - key: "name"
+      operand: "="
+      value: "test"
+      negate: false
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: false
+  wantCount: 2
+
+- name: key_with_dots
+  spec: "backend.s3.region=us-west-2"
+  delimiter: ""
+  want:
+    - key: "backend.s3.region"
+      operand: "="
+      value: "us-west-2"
+      negate: false
+  wantCount: 1
+
+- name: empty_target
+  spec: "name="
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "="
+      value: ""
+      negate: false
+  wantCount: 1

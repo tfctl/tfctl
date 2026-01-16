@@ -1,0 +1,32 @@
+# no-cloc
+- name: no_filters
+  spec: ""
+  wantCount: 3
+  wantNames:
+    - aws-resource-1
+    - gcp-resource
+    - aws-resource-2
+
+- name: prefix_filter
+  spec: "type^aws_"
+  wantCount: 2
+  wantNames:
+    - aws-resource-1
+    - aws-resource-2
+
+- name: exact_match_filter
+  spec: "name=gcp-resource"
+  wantCount: 1
+  wantNames:
+    - gcp-resource
+
+- name: no_matches
+  spec: "name=nonexistent"
+  wantCount: 0
+  wantNames: null
+
+- name: multiple_filters
+  spec: "type^aws_,name@1"
+  wantCount: 1
+  wantNames:
+    - aws-resource-1

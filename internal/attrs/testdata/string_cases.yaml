@@ -1,0 +1,36 @@
+# no-cloc
+- name: empty_list
+  attrList: []
+  want: ""
+
+- name: single_attr
+  attrList:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U"
+  want: "attributes.name:name:U"
+
+- name: multiple_attrs
+  attrList:
+    - key: "id"
+      outputKey: "id"
+      include: true
+      transformSpec: ""
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U"
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: "l"
+  want: "id:id:,attributes.name:name:U,attributes.email:email:l"
+
+- name: attr_with_empty_transform
+  attrList:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+  want: "attributes.name:name:"

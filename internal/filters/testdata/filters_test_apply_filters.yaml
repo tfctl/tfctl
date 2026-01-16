@@ -1,0 +1,108 @@
+# no-cloc
+- name: no_filters
+  filters: []
+  want: true
+
+- name: single_filter_match
+  filters:
+    - key: "name"
+      operand: "="
+      value: "my-resource"
+      negate: false
+  want: true
+
+- name: single_filter_no_match
+  filters:
+    - key: "name"
+      operand: "="
+      value: "other"
+      negate: false
+  want: false
+
+- name: multiple_filters_all_match
+  filters:
+    - key: "name"
+      operand: "="
+      value: "my-resource"
+      negate: false
+    - key: "type"
+      operand: "^"
+      value: "aws_"
+      negate: false
+  want: true
+
+- name: multiple_filters_one_fails
+  filters:
+    - key: "name"
+      operand: "="
+      value: "my-resource"
+      negate: false
+    - key: "type"
+      operand: "^"
+      value: "gcp_"
+      negate: false
+  want: false
+
+- name: server-side_filter_ignored
+  filters:
+    - key: "_serverside_filter"
+      operand: "="
+      value: "value"
+      negate: false
+  want: true
+
+- name: missing_attribute_key_continues
+  filters:
+    - key: "nonexistent"
+      operand: "="
+      value: "value"
+      negate: false
+  want: true
+
+- name: numeric_comparison
+  filters:
+    - key: "count"
+      operand: ">"
+      value: "3"
+      negate: false
+  want: true
+
+- name: missing_key_returns_nil
+  filters:
+    - key: "nonexistent_key"
+      operand: "="
+      value: "value"
+      negate: false
+  want: true
+
+- name: null_value_filter_fails
+  filters:
+    - key: "description"
+      operand: "="
+      value: "value"
+      negate: false
+  want: false
+
+- name: unsupported_type_with_equals_operator_passes
+  filters:
+    - key: "nested"
+      operand: "="
+      value: "value"
+      negate: false
+  want: true
+
+- name: unsupported_type_with_contains_operator_uses_checkContainsOperand
+  filters:
+    - key: "nested"
+      operand: "@"
+      value: "inner"
+      negate: false
+  want: true
+
+- name: array_type_with_equals_operator_passes
+  filters:
+    - key: "tags"
+      operand: "="
+      value: "prod"
+      negate: false
+  want: true

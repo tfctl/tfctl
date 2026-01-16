@@ -1,0 +1,17 @@
+# no-cloc
+list_top:
+  - a
+  - b
+nested:
+  inner:
+    list:
+      - one
+      - two three
+sq:
+  test:
+    - --output json
+    - --sort resource,id
+nonstring_list:
+  - a
+  - { k: v }
+not_a_list: hello

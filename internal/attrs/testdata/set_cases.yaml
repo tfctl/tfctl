@@ -1,0 +1,260 @@
+# no-cloc
+- name: empty_string
+  initial: []
+  value: ""
+  wantLen: 0
+  wantAttrs: null
+  wantErr: false
+
+- name: wildcard_only
+  initial: []
+  value: "*"
+  wantLen: 0
+  wantAttrs: null
+  wantErr: false
+
+- name: simple_key
+  initial: []
+  value: "name"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+
+- name: key_with_dot_notation
+  initial: []
+  value: ".id"
+  wantLen: 1
+  wantAttrs:
+    - key: "id"
+      outputKey: "id"
+      include: true
+      transformSpec: ""
+
+- name: excluded_key_with_!
+  initial: []
+  value: "!name"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: false
+      transformSpec: ""
+
+- name: key_with_custom_output_name
+  initial: []
+  value: "full-name:name"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.full-name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+
+- name: key_with_transform_spec
+  initial: []
+  value: "name::u"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "u"
+
+- name: full_format_-_key:output:transform
+  initial: []
+  value: "created-at:date:t"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.created-at"
+      outputKey: "date"
+      include: true
+      transformSpec: "t"
+
+- name: multiple_attrs_comma_separated
+  initial: []
+  value: "name,email,id"
+  wantLen: 3
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: ""
+    - key: "attributes.id"
+      outputKey: "id"
+      include: true
+      transformSpec: ""
+
+- name: mixed_formats_-_multiple_attrs
+  initial: []
+  value: ".id,name::U,!internal,created-at:date:t"
+  wantLen: 4
+  wantAttrs:
+    - key: "id"
+      outputKey: "id"
+      include: true
+      transformSpec: ""
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U"
+    - key: "attributes.internal"
+      outputKey: "internal"
+      include: false
+      transformSpec: ""
+    - key: "attributes.created-at"
+      outputKey: "date"
+      include: true
+      transformSpec: "t"
+
+- name: multiple_attrs_with_transforms
+  initial: []
+  value: "resource:r:U,id:identifier:12"
+  wantLen: 2
+  wantAttrs:
+    - key: "attributes.resource"
+      outputKey: "r"
+      include: true
+      transformSpec: "U"
+    - key: "attributes.id"
+      outputKey: "identifier"
+      include: true
+      transformSpec: "12"
+
+- name: multiple_attrs_with_combined_transforms
+  initial: []
+  value: "name::U20,email::l,status::-10"
+  wantLen: 3
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U20"
+    - key: "attributes.email"
+      outputKey: "email"
+      include: true
+      transformSpec: "l"
+    - key: "attributes.status"
+      outputKey: "status"
+      include: true
+      transformSpec: "-10"
+
+- name: global_transform_with_wildcard
+  initial: []
+  value: "*::U"
+  wantLen: 1
+  wantAttrs:
+    - key: "*"
+      outputKey: "*"
+      include: false
+      transformSpec: "U"
+
+- name: complex_real-world_example
+  initial: []
+  value: ".id:ID,name:Name:U,created-at:Created:t,!internal-field,status::20"
+  wantLen: 5
+  wantAttrs:
+    - key: "id"
+      outputKey: "ID"
+      include: true
+      transformSpec: ""
+    - key: "attributes.name"
+      outputKey: "Name"
+      include: true
+      transformSpec: "U"
+    - key: "attributes.created-at"
+      outputKey: "Created"
+      include: true
+      transformSpec: "t"
+    - key: "attributes.internal-field"
+      outputKey: "internal-field"
+      include: false
+      transformSpec: ""
+    - key: "attributes.status"
+      outputKey: "status"
+      include: true
+      transformSpec: "20"
+
+- name: nested_key_with_dots
+  initial: []
+  value: "user.email.address"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.user.email.address"
+      outputKey: "address"
+      include: true
+      transformSpec: ""
+
+- name: update_existing_attr
+  initial:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+  value: "name::U"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U"
+
+- name: update_existing_attr_by_output_key
+  initial:
+    - key: "attributes.full-name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+  value: "name::l"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.full-name"
+      outputKey: "name"
+      include: true
+      transformSpec: "l"
+
+- name: whitespace_trimming
+  initial: []
+  value: " name : display : U "
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "display"
+      include: true
+      transformSpec: "U"
+
+- name: empty_output_key_uses_json_key
+  initial: []
+  value: "name:"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: ""
+
+- name: invalid_transform_spec_accepted_-_will_be_ignored_during_transform
+  initial: []
+  value: "resource::("
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.resource"
+      outputKey: "resource"
+      include: true
+      transformSpec: "("
+
+- name: mixed_valid_and_invalid_in_transform_spec
+  initial: []
+  value: "name::U5xyz"
+  wantLen: 1
+  wantAttrs:
+    - key: "attributes.name"
+      outputKey: "name"
+      include: true
+      transformSpec: "U5xyz"

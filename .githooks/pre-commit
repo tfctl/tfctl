@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR=$(git rev-parse --show-toplevel)
+cd "$ROOT_DIR"
+
+DOCS=./docs
+# Run docs generation if any docs templates or config changed
+if git diff --cached --name-only --diff-filter=ACMR |
+  grep -qE "^${DOCS#./}/.*\\.(yaml|tmpl)$"; then
+  echo "[pre-commit] generating docs..." >&2
+
+  # Build and run the generator (cached by Go build cache)
+  if ! go build -o .git/.docsgen tools/docsgen/main.go; then
+    echo "[pre-commit] docsgen build failed" >&2
+    exit 1
+  fi
+  .git/.docsgen "${DOCS}"
+
+  # Stage generated artifacts if they changed
+  git add "${DOCS}/man/share/man1/*.1" "${DOCS}/tldr/*.md" 2>/dev/null || true
+
+  echo "[pre-commit] doc generation complete." >&2
+else
+  echo "[pre-commit] no staged docs template changes; skipping doc generation." >&2
+fi
+
+# Run Go quality checks if any .go files are staged
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.go$'; then
+  bash tools/check.sh || exit 1
+else
+  echo "[pre-commit] no staged .go changes; skipping Go quality checks." >&2
+fi
+
+exit 0

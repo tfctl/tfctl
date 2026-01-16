@@ -1,0 +1,73 @@
+.TH tfctl-ps 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.SH NAME
+tfctl\-ps \- Plan summary
+.SH SYNOPSIS
+tfctl ps [planfile] [options]
+.SH DESCRIPTION
+Show a summary of the given plan.
+
+.SH OPTIONS
+
+.TP
+\fB--color/-c\fR
+Colorize text output.
+
+
+.TP
+\fB--filter/-f string\fR
+Comma-separated list of filters to apply to results
+
+
+.TP
+\fB--help\fR
+Show command help.
+
+
+.TP
+\fB--local/-l\fR
+Show timestamps in local time according to your OS.
+
+
+.TP
+\fB--output/-o string\fR
+Output format (text (default), json, yaml, csv).
+
+.fi
+The `text` output format is a human-friendly table format. The `json`, `yaml`, and `csv` formats are machine-friendly and can be used for further processing.
+.nf
+
+
+.TP
+\fB--sort/-s string\fR
+Comma-separated list of fields to sort by.
+
+.fi
+Prefix field names with `-` to sort in descending order.  For example, `--sort=-created-at,name` sorts first by Created At (newest first), then by Name (A-Z).
+.nf
+
+
+.TP
+\fB--titles\fR
+Include column headings in text output.
+
+
+.TP
+\fB--tldr\fR
+Show tldr page if a client is installed.
+
+
+
+
+.SH EXAMPLES
+
+.TP
+Show only a summary of a Terraform plan.
+.IP
+terraform plan | tfctl ps
+
+.TP
+Show the full plan output while also including a summary.
+.IP
+terraform plan | tee >(tfctl ps)
+
+

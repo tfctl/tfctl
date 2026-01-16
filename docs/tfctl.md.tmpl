@@ -1,0 +1,42 @@
+# NAME
+
+tfctl {{.ID}} — {{.Short}}
+
+# DESCRIPTION
+
+{{.Description}}
+
+# USAGE
+
+`{{.Usage}}`
+
+{{if .Flags}}
+# OPTIONS
+
+| Flag | Default | Description |
+|------| ------- |-------------|
+{{range .Flags}}| {{.Syntax}} | {{.Default}} | {{.Description}} {{if .More}}[More info](#{{.ID}}){{end}}|
+{{end}}
+
+{{range .Flags}}{{if .More}}
+  ## {{.ID}}
+  {{.More}}
+{{end}}{{end}}
+{{if .Notes}}
+## NOTES
+{{range .Notes}}
+- {{.}}
+{{end}}
+{{end}}
+
+{{end}}
+{{if .Examples}}# EXAMPLES
+{{range .Examples}}
+**{{.Description}}**
+
+```sh
+{{.Command}}
+```
+
+{{end}}
+{{end}}

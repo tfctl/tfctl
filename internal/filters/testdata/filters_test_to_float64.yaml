@@ -1,0 +1,80 @@
+# no-cloc
+- name: float64
+  value: 42.5
+  want: 42.5
+  wantOk: true
+
+- name: float32
+  value: 42.5
+  valueType: "float32"
+  want: 42.5
+  wantOk: true
+
+- name: int
+  value: 42
+  want: 42
+  wantOk: true
+
+- name: int64
+  value: 42
+  valueType: "int64"
+  want: 42
+  wantOk: true
+
+- name: uint32
+  value: 42
+  valueType: "uint32"
+  want: 42
+  wantOk: true
+
+- name: int8
+  value: 10
+  valueType: "int8"
+  want: 10
+  wantOk: true
+
+- name: int16
+  value: 100
+  valueType: "int16"
+  want: 100
+  wantOk: true
+
+- name: int32
+  value: 1000
+  valueType: "int32"
+  want: 1000
+  wantOk: true
+
+- name: uint
+  value: 42
+  valueType: "uint"
+  want: 42
+  wantOk: true
+
+- name: uint8
+  value: 50
+  valueType: "uint8"
+  want: 50
+  wantOk: true
+
+- name: uint16
+  value: 500
+  valueType: "uint16"
+  want: 500
+  wantOk: true
+
+- name: uint64
+  value: 5000
+  valueType: "uint64"
+  want: 5000
+  wantOk: true
+
+- name: string
+  value: "42"
+  want: 0
+  wantOk: false
+
+- name: nil
+  value: null
+  want: 0
+  wantOk: false

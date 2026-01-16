@@ -1,0 +1,92 @@
+# no-cloc
+- name: slice_contains_true
+  value:
+    - a
+    - b
+    - c
+  filter:
+    operand: "@"
+    value: "b"
+    negate: false
+  want: true
+
+- name: slice_contains_false
+  value:
+    - a
+    - b
+    - c
+  filter:
+    operand: "@"
+    value: "d"
+    negate: false
+  want: false
+
+- name: slice_not_contains_true
+  value:
+    - a
+    - b
+    - c
+  filter:
+    operand: "@"
+    value: "d"
+    negate: true
+  want: true
+
+- name: slice_not_contains_false
+  value:
+    - a
+    - b
+    - c
+  filter:
+    operand: "@"
+    value: "b"
+    negate: true
+  want: false
+
+- name: map_key_exists_true
+  value:
+    key1: value1
+    key2: value2
+  filter:
+    operand: "@"
+    value: "key1"
+    negate: false
+  want: true
+
+- name: map_key_exists_false
+  value:
+    key1: value1
+    key2: value2
+  filter:
+    operand: "@"
+    value: "key3"
+    negate: false
+  want: false
+
+- name: map_key_not_exists_true
+  value:
+    key1: value1
+    key2: value2
+  filter:
+    operand: "@"
+    value: "key3"
+    negate: true
+  want: true
+
+- name: map_key_not_exists_false
+  value:
+    key1: value1
+    key2: value2
+  filter:
+    operand: "@"
+    value: "key1"
+    negate: true
+  want: false
+
+- name: unsupported_type
+  value: 123
+  filter:
+    operand: "@"
+    value: "test"
+    negate: false
+  want: false

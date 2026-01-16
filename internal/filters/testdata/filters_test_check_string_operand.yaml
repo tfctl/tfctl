@@ -1,0 +1,152 @@
+# no-cloc
+- name: exact_match_true
+  value: "test"
+  filter:
+    operand: "="
+    value: "test"
+    negate: false
+  want: true
+
+- name: exact_match_false
+  value: "test"
+  filter:
+    operand: "="
+    value: "other"
+    negate: false
+  want: false
+
+- name: negated_exact_match_true
+  value: "test"
+  filter:
+    operand: "="
+    value: "other"
+    negate: true
+  want: true
+
+- name: negated_exact_match_false
+  value: "test"
+  filter:
+    operand: "="
+    value: "test"
+    negate: true
+  want: false
+
+- name: prefix_match_true
+  value: "aws_instance"
+  filter:
+    operand: "^"
+    value: "aws_"
+    negate: false
+  want: true
+
+- name: prefix_match_false
+  value: "gcp_instance"
+  filter:
+    operand: "^"
+    value: "aws_"
+    negate: false
+  want: false
+
+- name: case_insensitive_match_true
+  value: "TEST"
+  filter:
+    operand: "~"
+    value: "test"
+    negate: false
+  want: true
+
+- name: case_insensitive_match_false
+  value: "testing"
+  filter:
+    operand: "~"
+    value: "test"
+    negate: false
+  want: false
+
+- name: contains_true
+  value: "my-test-resource"
+  filter:
+    operand: "@"
+    value: "test"
+    negate: false
+  want: true
+
+- name: contains_false
+  value: "my-resource"
+  filter:
+    operand: "@"
+    value: "test"
+    negate: false
+  want: false
+
+- name: negated_contains_true
+  value: "my-resource"
+  filter:
+    operand: "@"
+    value: "test"
+    negate: true
+  want: true
+
+- name: regex_match_true
+  value: "aws_instance_v1"
+  filter:
+    operand: "/"
+    value: "^aws_.*_v\\d+$"
+    negate: false
+  want: true
+
+- name: regex_match_false
+  value: "instance"
+  filter:
+    operand: "/"
+    value: "^aws_.*"
+    negate: false
+  want: false
+
+- name: negated_regex_match
+  value: "instance"
+  filter:
+    operand: "/"
+    value: "^aws_.*"
+    negate: true
+  want: true
+
+- name: greater_than_string_true
+  value: "z"
+  filter:
+    operand: ">"
+    value: "a"
+    negate: false
+  want: true
+
+- name: greater_than_string_false
+  value: "a"
+  filter:
+    operand: ">"
+    value: "z"
+    negate: false
+  want: false
+
+- name: less_than_string_true
+  value: "a"
+  filter:
+    operand: "<"
+    value: "z"
+    negate: false
+  want: true
+
+- name: invalid_regex
+  value: "test"
+  filter:
+    operand: "/"
+    value: "[invalid"
+    negate: false
+  want: false
+
+- name: unsupported_operand
+  value: "test"
+  filter:
+    operand: "?"
+    value: "test"
+    negate: false
+  want: false

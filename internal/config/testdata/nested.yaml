@@ -1,0 +1,9 @@
+backend:
+  s3:
+    region: us-west-2
+    bucket: terraform-state
+    key: project/terraform.tfstate
+    max_retries: 5
+  local:
+    region: us-east-1
+    bucket: local-bucket

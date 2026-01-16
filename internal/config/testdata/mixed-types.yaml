@@ -1,0 +1,7 @@
+name: test-project
+version: 1
+enabled: true
+timeout: 30.5
+tags:
+  - dev
+  - test

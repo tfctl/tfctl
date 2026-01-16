@@ -1,0 +1,227 @@
+---
+anchors:
+  attrs: &attrs
+    id: attrs
+    syntax: --attrs/-a string
+    description: Comma-separated list of attributes to include in results.
+    more: >-
+      There are many possible attributes depending on the command. Common
+      attributes include: `id`, `type`, `name`, `created-at`, `updated-at`, etc.
+      But, each command has it's own schema. Other than the `sq` command, use the
+      `--schema` flag to see the full list of available attributes.
+
+
+      There is also a feature-rich syntax for transforming attribute values. See
+      [Attributes](../attrs.md) for details.
+  host: &host
+    id: host
+    syntax: --host/-h string
+    description: HCP/TFE host to use. Overrides the backend.
+    default: app.terraform.io
+  limit: &limit
+    id: limit
+    syntax: --limit/-l int
+    description: Limit the result set to `int` results.
+    default: unlimited
+  org: &org
+    id: org
+    syntax: --org string
+    description: "Organization to use for all commands. Overrides the backend."
+  schema: &schema
+    id: schema
+    syntax: --schema
+    description: List of attributes for use with `--attrs`, `--filter`, and '--sort'.
+  workspace: &workspace
+    id: workspace
+    syntax: --workspace/-w string
+    description: Workspace to use for all commands. Overrides the backend.
+    default: default
+
+subcommands:
+  - id: mq
+    short: HCP/TFE Module Query
+    description: Query HCP/TFE modules.
+    usage: tfctl mq [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *org
+      - *schema
+    examples:
+      - command: tfctl mq --attrs created-at
+        description: Display modules and include Created At information.
+      - command: tfctl mq --org hr --filter 'name@iam'
+        description: Display modules in the "hr" org with "iam" in their name.
+
+  - id: oq
+    short: HCP/TFE Organization Query
+    description: Query HCP/TFE organizations.
+    usage: tfctl oq [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *schema
+    examples:
+      - command: tfctl oq --attrs created-at
+        description: Display organizations and include Created At information.
+      - command: tfctl oq --filter 'name@myorg'
+        description: Display organizations with "myorg" in their name.
+
+  - id: pq
+    short: HCP/TFE Project Query
+    description: Query HCP/TFE projects.
+    usage: tfctl pq [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *org
+      - *schema
+    examples:
+      - command: tfctl pq --attrs updated-at
+        description: Display projects and include Updated At information.
+      - command: tfctl pq --org hr --filter 'name@prod'
+        description: Display projects in the "hr" org with "prod" in their name.
+
+  - id: ps
+    short: Plan summary
+    description: Show a summary of the given plan.
+    usage: tfctl ps [planfile] [options]
+    examples:
+      - command: terraform plan | tfctl ps
+        description: Show only a summary of a Terraform plan.
+      - command: terraform plan | tee >(tfctl ps)
+        description: Show the full plan output while also including a summary.
+
+  - id: rq
+    short: HCP/TFE Run Query
+    description: Query HCP/TFE runs for the given workspace.
+    usage: tfctl rq [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *org
+      - *workspace
+      - *schema
+    examples:
+      - command: tfctl rq --attrs created-at,status
+        description: Display runs and include Created At and Status information.
+      - command: tfctl rq --org hr --workspace prod --filter 'status@errored'
+        description: Display errored runs in the "prod" workspace of the "hr" org.
+
+  - id: sq
+    short: State Query
+    description: Query Terraform state files.
+    usage: tfctl sq [RootDir] [options]
+    flags:
+      - *attrs
+      - id: chop
+        syntax: --chop
+        description: Chop common resource prefix from names.
+      - id: concrete
+        syntax: --concrete/-k
+        description: Only include concrete resources.
+      - id: diff
+        syntax: --diff [ old[:new] \| + ]
+        description: Find differences between state versions.
+        default: CSV~1 CSV~0
+        more: >-
+          The `old` and `new` parameters can be version numbers, `latest`, or `earliest`.
+          If `+` is provided, compares the latest version to the previous version.
+      - *host
+      - *org
+      - id: passphrase
+        syntax: --passphrase string
+        description: OpenTofu encrypted state passphrase.
+      - id: short
+        syntax: --short
+        description: Shorten full resource name paths.
+        default: !!str false
+      - id: sv
+        syntax: --sv string
+        description: State version to query.  Can be a version number, `latest`, or `earliest`.
+        default: latest
+        more: >-
+          Can also be relativative. For example, `-1` is the previous version,
+          `-2` is two versions ago, `+1` is the next version, and so on.
+      - *workspace
+    examples:
+      - command: tfctl sq --attrs created-at
+        description: Display state file in current directory and include Created At information.
+      - command: tfctl sq --titles
+        description: Display state file in current directory and include column headings.
+      - command: tfctl sq --concrete --filter 'resource@vpc'
+        description: Display only concrete resources with "vpc" in their type or name.
+      - command: tfctl sq --sv -3 --output json
+        description: Display the third most recent state file version in JSON format..
+    notes:
+      - "`sq` operates against an IaC root directory (defaults to CWD when not provided)."
+      - "When using encrypted state, `sq` will prompt for a passphrase or use `TF_VAR_passphrase`."
+
+  - id: svq
+    short: State Version Query
+    description: Query Terraform state version history.
+    usage: tfctl svq [RootDir] [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *org
+      - *workspace
+    examples:
+      - command: tfctl svq --attrs created-at
+        description: Display state file history for current directory and include Created At information.
+      - command: tfctl svq --limit 5 --attrs created-at::10
+        description: Display the five most recent state file versions and include the YYYY-MM-DD portion of the Created At information.
+
+  - id: wq
+    short: HCP/TFE Workspace Query
+    description: Query HCP/TFE workspaces.
+    usage: tfctl wq [options]
+    flags:
+      - *attrs
+      - *host
+      - *limit
+      - *org
+      - *schema
+    examples:
+      - command: tfctl wq --attrs created-at
+        description: Display workspaces and include Created At information.
+      - command: tfctl wq --org hr --filter 'name@prod'
+        description: Display workspaces in the "hr" org with "prod" in their name.
+
+common:
+  flags:
+    - id: color
+      syntax: --color/-c
+      description: Colorize text output.
+    - id: filter
+      syntax: --filter/-f string
+      description: Comma-separated list of filters to apply to results
+    - id: help
+      syntax: --help
+      description: Show command help.
+    - id: local
+      syntax: --local/-l
+      description: Show timestamps in local time according to your OS.
+    - id: output
+      syntax: --output/-o string
+      description: Output format (text (default), json, yaml, csv).
+      more: >-
+        The `text` output format is a human-friendly table format. The `json`, `yaml`,
+        and `csv` formats are machine-friendly and can be used for further processing.
+    - id: sort
+      syntax: --sort/-s string
+      description: Comma-separated list of fields to sort by.
+      more: >-
+        Prefix field names with `-` to sort in descending order.  For example,
+        `--sort=-created-at,name` sorts first by Created At (newest first), then by Name (A-Z).
+    - id: titles
+      syntax: --titles
+      description: Include column headings in text output.
+    - id: tldr
+      syntax: --tldr
+      description: Show tldr page if a client is installed.

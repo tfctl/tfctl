@@ -1,0 +1,29 @@
+#!/bin/sh
+
+
+echo "[commit-msg] validate commit message includes type..." >&2
+
+# Validate that commit message subject starts with an allowed type and a colon.
+# Install this as .githooks/commit-msg and set `git config core.hooksPath .githooks`
+MSG_FILE="${1:-}"
+
+if [ -z "$MSG_FILE" ]; then
+  echo "ERROR: commit-msg hook: no commit message file supplied."
+  echo "Make sure this script is installed as .githooks/commit-msg and you set core.hooksPath"
+  exit 1
+fi
+
+# Get the first non-empty line (subject)
+SUBJECT="$(sed -n '/./{p;q;}' "$MSG_FILE")"
+
+PATTERN='^(feat|bug|docs|refactor|test|chore|revert): [[:graph:]].+'
+
+if ! printf '%s\n' "$SUBJECT" | grep -Eq "$PATTERN"; then
+  echo >&2 "ERROR: Invalid commit message."
+  echo >&2 "Your commit message must start with one of: feat, bug, docs, refactor, test, chore, revert"
+  echo >&2 "Format: <type>: <short description>"
+  echo >&2 "Example: feat: add CSV export for user reports"
+  exit 1
+fi
+
+exit 0

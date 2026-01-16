@@ -1,0 +1,109 @@
+.TH tfctl-rq 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.SH NAME
+tfctl\-rq \- HCP/TFE Run Query
+.SH SYNOPSIS
+tfctl rq [options]
+.SH DESCRIPTION
+Query HCP/TFE runs for the given workspace.
+
+.SH OPTIONS
+
+.TP
+\fB--attrs/-a string\fR
+Comma-separated list of attributes to include in results.
+
+.fi
+There are many possible attributes depending on the command. Common attributes include: `id`, `type`, `name`, `created-at`, `updated-at`, etc. But, each command has it's own schema. Other than the `sq` command, use the `--schema` flag to see the full list of available attributes.
+
+There is also a feature-rich syntax for transforming attribute values. See [Attributes](../attrs.md) for details.
+.nf
+
+
+.TP
+\fB--color/-c\fR
+Colorize text output.
+
+
+.TP
+\fB--filter/-f string\fR
+Comma-separated list of filters to apply to results
+
+
+.TP
+\fB--help\fR
+Show command help.
+
+
+.TP
+\fB--host/-h string\fR
+HCP/TFE host to use. Overrides the backend.
+
+
+.TP
+\fB--limit/-l int\fR
+Limit the result set to `int` results.
+
+
+.TP
+\fB--local/-l\fR
+Show timestamps in local time according to your OS.
+
+
+.TP
+\fB--org string\fR
+Organization to use for all commands. Overrides the backend.
+
+
+.TP
+\fB--output/-o string\fR
+Output format (text (default), json, yaml, csv).
+
+.fi
+The `text` output format is a human-friendly table format. The `json`, `yaml`, and `csv` formats are machine-friendly and can be used for further processing.
+.nf
+
+
+.TP
+\fB--schema\fR
+List of attributes for use with `--attrs`, `--filter`, and '--sort'.
+
+
+.TP
+\fB--sort/-s string\fR
+Comma-separated list of fields to sort by.
+
+.fi
+Prefix field names with `-` to sort in descending order.  For example, `--sort=-created-at,name` sorts first by Created At (newest first), then by Name (A-Z).
+.nf
+
+
+.TP
+\fB--titles\fR
+Include column headings in text output.
+
+
+.TP
+\fB--tldr\fR
+Show tldr page if a client is installed.
+
+
+.TP
+\fB--workspace/-w string\fR
+Workspace to use for all commands. Overrides the backend.
+
+
+
+
+.SH EXAMPLES
+
+.TP
+Display runs and include Created At and Status information.
+.IP
+tfctl rq --attrs created-at,status
+
+.TP
+Display errored runs in the "prod" workspace of the "hr" org.
+.IP
+tfctl rq --org hr --workspace prod --filter 'status@errored'
+
+

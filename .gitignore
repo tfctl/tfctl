@@ -1,0 +1,16 @@
+**/.copilot/
+**/.vscode/
+**/.envrc*
+
+# Go test coverage reports.
+**/*.out
+
+# Integration test binaries.
+**/*.test
+
+# Added by goreleaser init.
+dist/
+
+# Development binaries built at root (should use -o /tmp or .git/).
+/docgen
+

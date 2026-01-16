@@ -1,0 +1,387 @@
+// Copyright (c) 2026 Steve Taranto <staranto@gmail.com>.
+// SPDX-License-Identifier: Apache-2.0
+
+package output
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/apex/log"
+	"github.com/charmbracelet/lipgloss/v2"
+	"github.com/charmbracelet/lipgloss/v2/table"
+	"github.com/tidwall/gjson"
+	"github.com/urfave/cli/v3"
+	"gopkg.in/yaml.v2"
+
+	"github.com/tfctl/tfctl/internal/attrs"
+	"github.com/tfctl/tfctl/internal/config"
+	"github.com/tfctl/tfctl/internal/filters"
+)
+
+// InterfaceToString converts supported primitive or composite values to a
+// string. A custom empty value may be provided.
+func InterfaceToString(value interface{}, emptyValue ...string) string {
+	if len(emptyValue) == 0 {
+		emptyValue = []string{""}
+	}
+
+	if value == nil || reflect.ValueOf(value).IsZero() {
+		return emptyValue[0]
+	}
+
+	// We note that the int and bool cases are unlikely to be reached due to JSON
+	// parsing behavior.
+	switch value := value.(type) {
+	case string:
+		return value
+	case int:
+		return strconv.Itoa(value)
+	case float64:
+		// Our current use cases have no need for an actual float, so we just return
+		// an integer.
+		return fmt.Sprintf("%.0f", value)
+	case bool:
+		return strconv.FormatBool(value)
+	default:
+		jsonBytes, err := json.Marshal(value)
+		if err != nil {
+			return fmt.Sprintf("%v", value)
+		}
+		return string(jsonBytes)
+	}
+}
+
+// NewTag constructs a Tag from a raw struct tag value and an optional holder
+// prefix used to build hierarchical attribute names.
+func NewTag(h string, s string) schemaTag {
+	allowed := []string{"attr"}
+
+	tag := schemaTag{}
+
+	parts := strings.Split(s, ",")
+	if len(parts) > 0 {
+		found := false
+		for _, a := range allowed {
+			if a == parts[0] {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return tag
+		}
+
+		tag.Kind = parts[0]
+	}
+
+	if len(parts) > 1 {
+		if h != "" {
+			parts[1] = fmt.Sprintf("%s.%s", h, parts[1])
+		}
+		tag.Name = parts[1]
+	}
+
+	if len(parts) > 2 {
+		tag.Encoding = parts[2]
+	}
+
+	return tag
+}
+
+// SliceDiceSpit orchestrates filtering, transforming, sorting and rendering
+// of a dataset according to command flags and attribute specifications. The
+// optional postProcess callback allows commands to apply custom transformations
+// to the filtered dataset before rendering.
+func SliceDiceSpit(raw bytes.Buffer,
+	attrs attrs.AttrList,
+	cmd *cli.Command,
+	parent string,
+	w io.Writer,
+	postProcess func([]map[string]interface{}) error) {
+
+	// Default to stdout.
+	if w == nil {
+		w = os.Stdout
+	}
+
+	// If raw, just dump it and go home.
+	output := cmd.String("output")
+	if output == "raw" {
+		_, _ = w.Write(raw.Bytes())
+		return
+	}
+
+	// Flatten the state schema, if this is sq.  This is done to bring the
+	// structure of the state file into alignment with the structures found in
+	// other command's payloads, thus enabling a common set of logic to process
+	// all.
+	if resources := gjson.Parse(raw.String()).Get("resources"); resources.Exists() {
+		raw = flattenState(resources, !cmd.Bool("short"))
+	}
+
+	var fullDataset gjson.Result
+	// We keep the "data" object from the document and throw away everything
+	// else, notably "included", which we don't have a use case for. We also
+	// parse this into JSON so that we can use the lowercase key names and not
+	// the proper case names from the TFE API.
+	if parent != "" {
+		fullDataset = gjson.Parse(raw.String()).Get(parent)
+	} else {
+		fullDataset = gjson.Parse(raw.String())
+	}
+
+	filter := cmd.String("filter")
+
+	// Note: The concrete filter is applied here to match sq command semantics.
+	// Command-specific logic like --chop is handled via postProcess callback in
+	// sq.go.
+	if cmd.Bool("concrete") {
+		if filter != "" {
+			filter += ","
+		}
+		filter += "mode=managed"
+	}
+
+	// Filter out the rows we don't want. Do it here so that the following
+	// processes are slightly more efficient since they'll be working on a smaller
+	// dataset.
+	filteredDataset := filters.FilterDataset(fullDataset, attrs, filter)
+
+	// THINK Force a time transformation to occur for all attributes, even though
+	// many will not be a timestamp. One alternative would be to look at first row
+	// of full dataset and only add the time transformation to attrs that look
+	// like timestamps.
+	if cmd.Bool("local") {
+		for a := range attrs {
+			attrs[a].TransformSpec += "t"
+		}
+	}
+
+	// Transform each value in each row.
+	for _, row := range filteredDataset {
+		for _, attr := range attrs {
+			if attr.TransformSpec != "" {
+				row[attr.OutputKey] = attr.Transform(row[attr.OutputKey])
+			}
+		}
+	}
+
+	spec := cmd.String("sort")
+	SortDataset(filteredDataset, spec)
+
+	switch output {
+	case "json":
+		// We marshal the filtered dataset into a JSON document.
+		// TODO Figure out how to maintain key order in the JSON document.
+		jsonOutput, err := json.Marshal(filteredDataset)
+		if err != nil {
+			log.Errorf("SliceDiceSpit json marshal: %v", err)
+		}
+		os.Stdout.Write(jsonOutput)
+	case "yaml":
+		yamlOutput, err := yaml.Marshal(filteredDataset)
+		if err != nil {
+			log.Errorf("SliceDiceSpit yaml marshal: %v", err)
+		}
+		os.Stdout.Write(yamlOutput)
+	default:
+		// We apply command-specific post-processing.
+		if postProcess != nil {
+			if err := postProcess(filteredDataset); err != nil {
+				log.Errorf("PostProcess: %v", err)
+			}
+		}
+
+		TableWriter(filteredDataset, attrs, cmd, w)
+	}
+}
+
+// TableWriter renders the result set in a tabular form honoring color,
+// titles and padding options. Output is written to w. If w is nil, os.Stdout
+// is used.
+func TableWriter(
+	resultSet []map[string]interface{},
+	attrs attrs.AttrList,
+	cmd *cli.Command,
+	w io.Writer) {
+
+	if w == nil {
+		w = os.Stdout
+	}
+
+	// We return early if there are no results to display.
+	if len(resultSet) == 0 {
+		return
+	}
+
+	// We initialize the table styles.
+	var (
+		headerStyle  = lipgloss.NewStyle().Align(lipgloss.Left).Bold(true)
+		cellStyle    = lipgloss.NewStyle().Padding(0, 0).Align(lipgloss.Left)
+		evenRowStyle = cellStyle
+		oddRowStyle  = cellStyle
+	)
+
+	// We apply color styles if coloring is enabled.
+	if cmd.Bool("color") {
+		headerColor, evenColor, oddColor := getColors("colors")
+
+		headerStyle = headerStyle.Foreground(lipgloss.Color(headerColor))
+		evenRowStyle = evenRowStyle.Foreground(lipgloss.Color(evenColor))
+		oddRowStyle = oddRowStyle.Foreground(lipgloss.Color(oddColor))
+	}
+
+	// We build the table rows from the result set.
+	var rows [][]string
+	for _, result := range resultSet {
+		row := make([]string, 0, len(result))
+		for _, attr := range attrs {
+			if !attr.Include {
+				continue
+			}
+			row = append(row, InterfaceToString(result[attr.OutputKey], "-"))
+		}
+		rows = append(rows, row)
+	}
+
+	// We render the header if present.
+	if cmd.Metadata["header"] != nil {
+		fmt.Fprintln(w, headerStyle.Render(cmd.Metadata["header"].(string)))
+	}
+
+	// We configure the table with padding and styles.
+	pad, _ := config.GetInt("padding", 0)
+	t := table.New().
+		BorderBottom(false).
+		BorderTop(false).
+		BorderLeft(false).
+		BorderRight(false).
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			var style lipgloss.Style
+			switch {
+			case row == table.HeaderRow:
+				style = headerStyle
+			case row%2 == 0:
+				style = evenRowStyle
+			default:
+				style = oddRowStyle
+			}
+
+			if col > 0 {
+				style = style.PaddingLeft(pad)
+			}
+
+			return style
+		}).
+		Headers().
+		Rows(rows...)
+
+	// We add column headers if titles are enabled.
+	if cmd.Bool("titles") {
+		var headers []string
+		for _, attr := range attrs {
+			if attr.Include {
+				headers = append(headers, attr.OutputKey)
+			}
+		}
+
+		// https://github.com/charmbracelet/lipgloss/issues/261
+		t = t.Headers(headers...).BorderHeader(false)
+	}
+	fmt.Fprintln(w, t)
+
+	// We render the footer if present.
+	if cmd.Metadata["footer"] != nil {
+		fmt.Fprintln(w, headerStyle.Render(cmd.Metadata["footer"].(string)))
+	}
+}
+
+// flattenState takes the state schema of each entry and flattens it into a
+// schema with parent and attributes. This is done so that we can have a common
+// schema for all the different types of resources.
+func flattenState(resources gjson.Result, short bool) bytes.Buffer {
+	var flatResources []map[string]interface{}
+
+	for _, resource := range resources.Array() {
+		common := getCommonFields(resource)
+
+		instances := resource.Get("instances")
+		for _, instance := range instances.Array() {
+			flatResource := make(map[string]interface{})
+			for key, value := range common {
+				flatResource[key] = value
+			}
+
+			for key, value := range instance.Map() {
+				flatResource[key] = value.Value()
+			}
+
+			module := ""
+			if flatResource["module"] != nil {
+				module = InterfaceToString(flatResource["module"]) + "."
+			}
+
+			mode := ""
+			if flatResource["mode"] != "managed" {
+				mode = InterfaceToString(flatResource["mode"]) + "."
+			}
+
+			indexKey := ""
+			if flatResource["index_key"] != nil {
+				switch v := flatResource["index_key"].(type) {
+				case int, int64, float64:
+					indexKey = fmt.Sprintf("[%v]", v)
+				default:
+					indexKey = fmt.Sprintf("[\"%v\"]", v)
+				}
+			}
+
+			resourceID := fmt.Sprintf("%s%s%s.%s%s", module, mode, flatResource["type"], flatResource["name"], indexKey)
+			if !short {
+				re := regexp.MustCompile(`(^module.)|(.module.)`)
+				resourceID = re.ReplaceAllString(resourceID, "+")
+			}
+			flatResource["resource"] = resourceID
+
+			flatResources = append(flatResources, flatResource)
+		}
+	}
+
+	jsonBytes, err := json.Marshal(flatResources)
+	if err != nil {
+		log.Errorf("flattenState marshal: %v", err)
+		return *bytes.NewBuffer([]byte{})
+	}
+
+	raw := *bytes.NewBuffer(jsonBytes)
+	return raw
+}
+
+// getColors returns configured color values for table rendering.
+func getColors(key string) (header string, even string, odd string) {
+	header, _ = config.GetString(fmt.Sprintf("%s.title", key), "#f6be00")
+	even, _ = config.GetString(fmt.Sprintf("%s.even", key), "#ffffff")
+	odd, _ = config.GetString(fmt.Sprintf("%s.odd", key), "#00c8f0")
+	return
+}
+
+// getCommonFields extracts common fields from a resource, excluding instances.
+func getCommonFields(resource gjson.Result) map[string]interface{} {
+	var common = make(map[string]interface{})
+	for key, value := range resource.Map() {
+		if key != "instances" {
+			common[key] = value.Value()
+		}
+	}
+	return common
+}

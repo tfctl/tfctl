@@ -1,0 +1,36 @@
+.TH tfctl-{{.ID}} 1 "{{.Date}}" "tfctl {{.Version}}" "tfctl"
+.SH NAME
+tfctl\-{{.ID}} \- {{.Short}}
+.SH SYNOPSIS
+{{.Usage}}
+.SH DESCRIPTION
+{{.Description}}
+{{if .Flags}}
+.SH OPTIONS
+{{range .Flags}}
+.TP
+\fB{{.Syntax}}\fR
+{{.Description}}
+{{if .More}}
+.fi
+{{.More}}
+.nf
+{{end}}
+{{end}}
+{{end}}
+{{if .Examples}}
+.SH EXAMPLES
+{{range .Examples}}
+.TP
+{{.Description}}
+.IP
+{{.Command}}
+{{end}}
+{{end}}
+{{if .Notes}}
+.SH NOTES
+{{range .Notes}}
+.IP
+{{.}}
+{{end}}
+{{end}}

@@ -1,0 +1,6 @@
+global:
+  setting: global-value
+backend:
+  s3:
+    setting: s3-value
+    specific: s3-specific

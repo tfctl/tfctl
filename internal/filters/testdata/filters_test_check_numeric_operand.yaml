@@ -1,0 +1,88 @@
+# no-cloc
+- name: exact_match_true
+  value: 42
+  filter:
+    operand: "="
+    value: "42"
+    negate: false
+  want: true
+
+- name: exact_match_false
+  value: 42
+  filter:
+    operand: "="
+    value: "40"
+    negate: false
+  want: false
+
+- name: negated_equal_true
+  value: 42
+  filter:
+    operand: "="
+    value: "40"
+    negate: true
+  want: true
+
+- name: negated_equal_false
+  value: 42
+  filter:
+    operand: "="
+    value: "42"
+    negate: true
+  want: false
+
+- name: greater_than_true
+  value: 50
+  filter:
+    operand: ">"
+    value: "42"
+    negate: false
+  want: true
+
+- name: greater_than_false
+  value: 42
+  filter:
+    operand: ">"
+    value: "50"
+    negate: false
+  want: false
+
+- name: less_than_true
+  value: 42
+  filter:
+    operand: "<"
+    value: "50"
+    negate: false
+  want: true
+
+- name: less_than_false
+  value: 50
+  filter:
+    operand: "<"
+    value: "42"
+    negate: false
+  want: false
+
+- name: float_value_with_integer_target
+  value: 42.5
+  filter:
+    operand: ">"
+    value: "42"
+    negate: false
+  want: true
+
+- name: invalid_target
+  value: 42
+  filter:
+    operand: "="
+    value: "invalid"
+    negate: false
+  want: false
+
+- name: unsupported_operand
+  value: 42
+  filter:
+    operand: "^"
+    value: "42"
+    negate: false
+  want: false
