@@ -49,7 +49,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           gh release create "${{ github.ref_name }}" \
-            --repo tfctl/homebrew-tfctlgo \
+            --repo tfctl/homebrew-tfctl \
             --title "${{ github.ref_name }}" \
             --notes "Release ${{ github.ref_name }} for Homebrew tap." \
             --latest
@@ -66,16 +66,16 @@ jobs:
           # Upload archives
           gh release upload "${{ github.ref_name }}" \
             dist/*.{tar.gz,zip,tar.xz,tgz} \
-            --repo tfctl/homebrew-tfctlgo --clobber || true
+            --repo tfctl/homebrew-tfctl --clobber || true
 
           # Upload detached signatures
           gh release upload "${{ github.ref_name }}" \
             dist/*.{tar.gz.sig,zip.sig,tar.xz.sig,tgz.sig} \
-            --repo tfctl/homebrew-tfctlgo --clobber || true
+            --repo tfctl/homebrew-tfctl --clobber || true
 
           # Upload docs
           gh release upload "${{ github.ref_name }}" \
             README.md LICENSE \
-            --repo tfctl/homebrew-tfctlgo --clobber
+            --repo tfctl/homebrew-tfctl --clobber
         env:
           GH_TOKEN: ${{ secrets.GH_GORELEASER_PAT }}
