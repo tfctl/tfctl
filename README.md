@@ -41,7 +41,8 @@ The native Terraform CLI provides essential IAC tooling for managing the lifecyc
 
 - Homebrew:
 	```bash
-	brew install tfctl/tfctlgo/tfctl
+  brew tap tfctl/tfctl
+	brew install tfctl
 	```
 - See the full [Installation Guide](docs/installation.md) for other options (tarball, build from source), plus installing man and TLDR pages.
 
