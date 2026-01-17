@@ -21,8 +21,8 @@ require (
 	github.com/urfave/cli/v3 v3.5.0
 	github.com/yudai/gojsondiff v1.0.0
 	github.com/zclconf/go-cty v1.17.0
-	golang.org/x/crypto v0.43.0
-	golang.org/x/term v0.36.0
+	golang.org/x/crypto v0.45.0
+	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -77,9 +77,9 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 )
