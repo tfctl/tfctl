@@ -7,7 +7,6 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/tfctl/tfctl)](https://golang.org/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tfctl/tfctl)](https://goreportcard.com/report/github.com/tfctl/tfctl)
 [![Release](https://img.shields.io/github/v/release/tfctl/tfctl?include_prereleases)](https://github.com/tfctl/tfctl/releases)
-[![CodeQL](https://github.com/tfctl/tfctl/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/tfctl/tfctl/actions/workflows/github-code-scanning/codeql)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 </div>
