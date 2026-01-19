@@ -80,7 +80,7 @@ func psCommandAction(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Parse the plan output and get resource actions
-	resources, err := parsePlanOutput(input)
+	resources, err := parsePlanOutput(input, cmd.Bool("concrete"))
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func psCommandAction(ctx context.Context, cmd *cli.Command) error {
 // parsePlanOutput reads the plan input and extracts resource action lines.
 // Format: # <resource-path> will be <action>
 // Example: # module.myapp[0].aws_s3_bucket.s3_loggingbucket will be created
-func parsePlanOutput(input io.Reader) ([]PlanResource, error) {
+func parsePlanOutput(input io.Reader, concrete bool) ([]PlanResource, error) {
 	// Regex to match lines like:
 	// # <resource-path> will be <action>
 	// We capture: resource path and the action (everything between "will/must be" and end of line)
@@ -135,7 +135,7 @@ func parsePlanOutput(input io.Reader) ([]PlanResource, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Strip ANSI color codes from the line
+		// Strip ANSI color codes from the line.
 		line = ansiColorRegex.ReplaceAllString(line, "")
 
 		// Try to match the resource action pattern
@@ -147,14 +147,17 @@ func parsePlanOutput(input io.Reader) ([]PlanResource, error) {
 			continue
 		}
 
-		// Try to match data read pattern
-		if matches := dataReadLineRegex.FindStringSubmatch(line); len(matches) == 2 {
-			resource := strings.TrimSpace(matches[1])
-			if strings.HasPrefix(resource, "data.") || strings.Contains(resource, ".data.") {
-				resources = append(resources, PlanResource{
-					Resource: resource,
-					Action:   "read",
-				})
+		// Try to match data read pattern. We'll only do this when concrete is false
+		// so that the summary is no polluted with data reads.
+		if !concrete {
+			if matches := dataReadLineRegex.FindStringSubmatch(line); len(matches) == 2 {
+				resource := strings.TrimSpace(matches[1])
+				if strings.HasPrefix(resource, "data.") || strings.Contains(resource, ".data.") {
+					resources = append(resources, PlanResource{
+						Resource: resource,
+						Action:   "read",
+					})
+				}
 			}
 		}
 	}
@@ -171,10 +174,10 @@ func psCommandBuilder(meta meta.Meta) *cli.Command {
 	flags := NewGlobalFlags("ps")
 
 	// Remove the --attrs flag since ps doesn't use it.
-	var noAttrsFlags []cli.Flag
+	var ps []cli.Flag
 	for _, flag := range flags {
 		if flag.Names()[0] != "attrs" {
-			noAttrsFlags = append(noAttrsFlags, flag)
+			ps = append(ps, flag)
 		}
 	}
 
@@ -183,7 +186,14 @@ func psCommandBuilder(meta meta.Meta) *cli.Command {
 		Usage:     "plan summary",
 		UsageText: "tfctl ps [plan-file]",
 		Metadata:  map[string]any{"meta": meta},
-		Flags:     noAttrsFlags,
-		Action:    psCommandAction,
+		Flags: append(ps, []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "concrete",
+				Aliases: []string{"k"},
+				Usage:   "only include concrete resources",
+				Value:   false,
+			},
+		}...),
+		Action: psCommandAction,
 	}
 }

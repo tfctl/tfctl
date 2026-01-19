@@ -25,6 +25,10 @@
 
 **Comprehensive** - Query any attribute available through the Terraform APIs.
 
+<a href="docs/asciinema/sq.gif" target="_blank" rel="noopener noreferrer">
+<img src="docs/asciinema/sq.gif" alt="sq demo" style="width:80%;height:auto;" />
+</a>
+
 ## Why tfctl?
 
 The native Terraform CLI provides essential IAC tooling for managing the lifecycle of resources it creates. But it lacks powerful state querying tools and offers no easily accessible way to query other elements of the Terraform ecosystem like workspaces, organizations, or module registries. This is especially problematic for automation use cases, when you need programmatic access to infrastructure metadata, state history, or cross-workspace insights.
@@ -33,17 +37,31 @@ The native Terraform CLI provides essential IAC tooling for managing the lifecyc
 
 ## Installation
 
-- Go package install
-  ```bash
-  go install github.com/tfctl/tfctl@latest
-  ```
+### Pre-built binaries
 
-- Homebrew:
-	```bash
-  brew tap tfctl/tfctl
-	brew install tfctl
-	```
-- See the full [Installation Guide](docs/installation.md) for other options (tarball, build from source), plus installing man and TLDR pages.
+Download the latest release for your platform from the [releases page](https://github.com/tfctl/tfctl/releases).
+
+Extract and move the binary to your PATH:
+
+```bash
+tar xvzf tfctl_*.tar.gz
+sudo mv tfctl /usr/local/bin
+```
+
+### Go package install
+
+```bash
+go install github.com/tfctl/tfctl@latest
+```
+
+### Homebrew
+
+```bash
+brew tap tfctl/tfctl
+brew install tfctl
+```
+
+**See the full [Installation Guide](docs/installation.md) for other options, plus installing man and TLDR pages.**
 
 ## Common Examples
 
@@ -109,11 +127,12 @@ Contributions are welcome! Whether it's:
 
 ## AI Acknowledgment
 
-This project uses AI-assisted development selectively:
+This project uses AI-assisted tools (mostly GitHub CoPilot w/Claude Opus and Gemini 3) selectively:
 
-- **Core functionality** — All command implementations (`oq`, `sq`, `wq`, etc.) and supporting code were written without AI assistance.
-- **AI-assisted** — The `si` command (not yet documented), test scaffolding, and portions of documentation were generated with AI assistance and reviewed before inclusion.
-- **Routine fixes** — AI tools assisted with lint corrections.
+- **AI-assisted** — The `si` command (not yet documented), test scaffolding, and most of the documentation were created with AI assistance and reviewed before inclusion.
+- **Routine refactoring** — AI tools assisted with lint corrections and minor optimizations.
+
+ **All query command implementations (`oq`, `sq`, `wq`, etc.), and supporting code, were developed without AI assistance.**
 
 ## Verify releases
 

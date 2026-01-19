@@ -7,7 +7,8 @@ This guide covers all supported ways to install tfctl and related documentation 
 The simplest way to install on macOS/Linux with Homebrew:
 
 ```bash
-brew install tfctl/tfctl/tfctl
+brew tap tfctl/tfctl
+brew install tfctl
 ```
 
 Notes:
@@ -24,22 +25,22 @@ curl -LO https://github.com/tfctl/tfctl/releases/latest/download/tfctl_amd64.deb
 ```
 
 Notes:
-- The Debian package installs man pages under `/usr/share/man` (man1 and man7):
-  - `man tfctl`
-  - `man tfctl-oq`
+- The Debian package installs man pages under `/usr/share/man/man1`.
 
 ## Pre-built tarball (manual install)
 
-Download a tarball for your platform from Releases, extract, and move the binary to your PATH:
+Download the latest release for your platform from the [releases page](https://github.com/tfctl/tfctl/releases).
+
+Extract and move the binary to your PATH:
 
 ```bash
-curl -L https://github.com/tfctl/tfctl/releases/latest/download/tfctl_linux_amd64.tar.gz | tar xz
-sudo mv tfctl /usr/local/bin/
+tar xvzf tfctl_*.tar.gz
+sudo mv tfctl /usr/local/bin
 ```
 
 ### Install man pages (from tarball)
 
-The tarball includes manual pages under `docs/man/share/man1` and `docs/man/share/man7`, but they aren’t auto-installed. If you’re unsure of your system’s man search paths, see the references at the end of this section.
+The tarball includes manual pages under `docs/man/share/man1`, but they aren’t auto-installed. If you’re unsure of your system’s man search paths, see the references at the end of this section.
 
 #### Linux
 

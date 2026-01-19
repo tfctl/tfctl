@@ -1,10 +1,10 @@
-.TH tfctl-pq 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-oq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
 .SH NAME
-tfctl\-pq \- HCP/TFE Project Query
+tfctl\-oq \- HCP/TFE Organization Query
 .SH SYNOPSIS
-tfctl pq [options]
+tfctl oq [options]
 .SH DESCRIPTION
-Query HCP/TFE projects.
+Query HCP/TFE organizations.
 
 .SH OPTIONS
 
@@ -50,11 +50,6 @@ Show timestamps in local time according to your OS.
 
 
 .TP
-\fB--org string\fR
-Organization to use for all commands. Overrides the backend.
-
-
-.TP
 \fB--output/-o string\fR
 Output format (text (default), json, yaml, csv).
 
@@ -92,13 +87,13 @@ Show tldr page if a client is installed.
 .SH EXAMPLES
 
 .TP
-Display projects and include Updated At information.
+Display organizations and include Created At information.
 .IP
-tfctl pq --attrs updated-at
+tfctl oq --attrs created-at
 
 .TP
-Display projects in the "hr" org with "prod" in their name.
+Display organizations with "myorg" in their name.
 .IP
-tfctl pq --org hr --filter 'name@prod'
+tfctl oq --filter 'name@myorg'
 
 

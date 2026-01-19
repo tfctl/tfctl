@@ -139,21 +139,10 @@ func SliceDiceSpit(raw bytes.Buffer,
 		fullDataset = gjson.Parse(raw.String())
 	}
 
-	filter := cmd.String("filter")
-
-	// Note: The concrete filter is applied here to match sq command semantics.
-	// Command-specific logic like --chop is handled via postProcess callback in
-	// sq.go.
-	if cmd.Bool("concrete") {
-		if filter != "" {
-			filter += ","
-		}
-		filter += "mode=managed"
-	}
-
 	// Filter out the rows we don't want. Do it here so that the following
 	// processes are slightly more efficient since they'll be working on a smaller
 	// dataset.
+	filter := cmd.String("filter")
 	filteredDataset := filters.FilterDataset(fullDataset, attrs, filter)
 
 	// THINK Force a time transformation to occur for all attributes, even though

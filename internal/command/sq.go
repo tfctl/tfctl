@@ -102,6 +102,16 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
+	// Make sure to add the concrete filter on --concrete.
+	if cmd.Bool("concrete") {
+		filter := cmd.String("filter")
+		if filter != "" {
+			filter += ","
+		}
+		filter += "mode=managed"
+		_ = cmd.Set("filter", filter)
+	}
+
 	output.SliceDiceSpit(raw, attrs, cmd, "", os.Stdout, postProcess)
 
 	return nil

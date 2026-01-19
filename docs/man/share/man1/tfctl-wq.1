@@ -1,10 +1,10 @@
-.TH tfctl-rq 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-wq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
 .SH NAME
-tfctl\-rq \- HCP/TFE Run Query
+tfctl\-wq \- HCP/TFE Workspace Query
 .SH SYNOPSIS
-tfctl rq [options]
+tfctl wq [options]
 .SH DESCRIPTION
-Query HCP/TFE runs for the given workspace.
+Query HCP/TFE workspaces.
 
 .SH OPTIONS
 
@@ -87,23 +87,18 @@ Include column headings in text output.
 Show tldr page if a client is installed.
 
 
-.TP
-\fB--workspace/-w string\fR
-Workspace to use for all commands. Overrides the backend.
-
-
 
 
 .SH EXAMPLES
 
 .TP
-Display runs and include Created At and Status information.
+Display workspaces and include Created At information.
 .IP
-tfctl rq --attrs created-at,status
+tfctl wq --attrs created-at
 
 .TP
-Display errored runs in the "prod" workspace of the "hr" org.
+Display workspaces in the "hr" org with "prod" in their name.
 .IP
-tfctl rq --org hr --workspace prod --filter 'status@errored'
+tfctl wq --org hr --filter 'name@prod'
 
 

@@ -1,10 +1,10 @@
-.TH tfctl-oq 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-mq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
 .SH NAME
-tfctl\-oq \- HCP/TFE Organization Query
+tfctl\-mq \- HCP/TFE Module Query
 .SH SYNOPSIS
-tfctl oq [options]
+tfctl mq [options]
 .SH DESCRIPTION
-Query HCP/TFE organizations.
+Query HCP/TFE modules.
 
 .SH OPTIONS
 
@@ -50,6 +50,11 @@ Show timestamps in local time according to your OS.
 
 
 .TP
+\fB--org string\fR
+Organization to use for all commands. Overrides the backend.
+
+
+.TP
 \fB--output/-o string\fR
 Output format (text (default), json, yaml, csv).
 
@@ -87,13 +92,13 @@ Show tldr page if a client is installed.
 .SH EXAMPLES
 
 .TP
-Display organizations and include Created At information.
+Display modules and include Created At information.
 .IP
-tfctl oq --attrs created-at
+tfctl mq --attrs created-at
 
 .TP
-Display organizations with "myorg" in their name.
+Display modules in the "hr" org with "iam" in their name.
 .IP
-tfctl oq --filter 'name@myorg'
+tfctl mq --org hr --filter 'name@iam'
 
 

@@ -3,6 +3,7 @@ anchors:
   attrs: &attrs
     id: attrs
     syntax: --attrs/-a string
+
     description: Comma-separated list of attributes to include in results.
     more: >-
       There are many possible attributes depending on the command. Common

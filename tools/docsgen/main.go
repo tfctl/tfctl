@@ -87,7 +87,7 @@ func main() {
 
 		types := []Outputs{
 			{Template: docs + "/tfctl.md.tmpl", Folder: docs + "/commands/", Suffix: ".md"},
-			{Template: docs + "/tfctl.man.tmpl", Folder: docs + "/./man/share/man1/", Suffix: ".1"},
+			{Template: docs + "/tfctl.man.tmpl", Folder: docs + "/./man/share/man1/", Prefix: "tfctl-", Suffix: ".1"},
 			{Template: docs + "/tfctl.tldr.tmpl", Folder: docs + "/./tldr/", Prefix: "tfctl-", Suffix: ".md"},
 		}
 

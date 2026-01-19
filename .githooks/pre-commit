@@ -25,6 +25,24 @@ else
   echo "[pre-commit] no staged docs template changes; skipping doc generation." >&2
 fi
 
+# If docs/asciinema/sq.cast has changed, then generate a new
+# docs/asciinema/sq.gif.
+if git diff --cached --name-only --diff-filter=ACMR |
+  grep -qE "^${DOCS#./}/asciinema/sq\\.cast$"; then
+  echo "[pre-commit] generating sq.gif from sq.cast..." >&2
+  if ! command -v agg &>/dev/null; then
+    echo "[pre-commit] agg not found; skipping gif generation." >&2
+  elif ! agg "${DOCS}/asciinema/sq.cast" "${DOCS}/asciinema/sq.gif"; then
+    echo "[pre-commit] agg failed to generate sq.gif" >&2
+    exit 1
+  else
+    git add "${DOCS}/asciinema/sq.gif" 2>/dev/null || true
+    echo "[pre-commit] sq.gif generation complete." >&2
+  fi
+else
+  echo "[pre-commit] no staged sq.cast changes; skipping gif generation." >&2
+fi
+
 # Run Go quality checks if any .go files are staged
 if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.go$'; then
   bash tools/check.sh || exit 1

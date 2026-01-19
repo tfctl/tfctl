@@ -40,7 +40,7 @@ archives:
       - LICENSE*
       - README.md
       - docs/man/**/*
-      - docs/tldr/**/*
+      - docs/tldr/*
 
 changelog:
   sort: asc

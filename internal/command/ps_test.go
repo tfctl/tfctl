@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParsePlanOutput(t *testing.T) {
-	input := `
+// testPlanOutput is the shared example plan output used across all ps tests.
+var testPlanOutput = `
 An execution plan has been generated and is shown below.
 Resource actions are indicated with the following symbols:
   + create
@@ -33,8 +33,10 @@ module.foo.data.bar: Reading...
 
 Plan: 1 to add, 1 to change, 0 to destroy.
 `
-	reader := strings.NewReader(input)
-	resources, err := parsePlanOutput(reader)
+
+func TestParsePlanOutput(t *testing.T) {
+	reader := strings.NewReader(testPlanOutput)
+	resources, err := parsePlanOutput(reader, false)
 	assert.NoError(t, err)
 
 	expected := []PlanResource{
@@ -43,6 +45,20 @@ Plan: 1 to add, 1 to change, 0 to destroy.
 		{Resource: "data.aws_caller_identity.validator", Action: "read"},
 		{Resource: "module.data.aws_caller_identity.validator", Action: "read"},
 		{Resource: "module.foo.data.bar", Action: "read"},
+	}
+
+	assert.Equal(t, expected, resources)
+}
+
+func TestParsePlanOutputConcrete(t *testing.T) {
+	reader := strings.NewReader(testPlanOutput)
+	resources, err := parsePlanOutput(reader, true)
+	assert.NoError(t, err)
+
+	// With concrete=true, data source reads are excluded.
+	expected := []PlanResource{
+		{Resource: "module.myapp.aws_s3_bucket.bucket", Action: "created"},
+		{Resource: "aws_instance.web", Action: "updated in-place"},
 	}
 
 	assert.Equal(t, expected, resources)

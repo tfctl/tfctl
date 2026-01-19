@@ -1,10 +1,10 @@
-.TH tfctl-svq 1 "January 15, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-pq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
 .SH NAME
-tfctl\-svq \- State Version Query
+tfctl\-pq \- HCP/TFE Project Query
 .SH SYNOPSIS
-tfctl svq [RootDir] [options]
+tfctl pq [options]
 .SH DESCRIPTION
-Query Terraform state version history.
+Query HCP/TFE projects.
 
 .SH OPTIONS
 
@@ -64,6 +64,11 @@ The `text` output format is a human-friendly table format. The `json`, `yaml`, a
 
 
 .TP
+\fB--schema\fR
+List of attributes for use with `--attrs`, `--filter`, and '--sort'.
+
+
+.TP
 \fB--sort/-s string\fR
 Comma-separated list of fields to sort by.
 
@@ -82,23 +87,18 @@ Include column headings in text output.
 Show tldr page if a client is installed.
 
 
-.TP
-\fB--workspace/-w string\fR
-Workspace to use for all commands. Overrides the backend.
-
-
 
 
 .SH EXAMPLES
 
 .TP
-Display state file history for current directory and include Created At information.
+Display projects and include Updated At information.
 .IP
-tfctl svq --attrs created-at
+tfctl pq --attrs updated-at
 
 .TP
-Display the five most recent state file versions and include the YYYY-MM-DD portion of the Created At information.
+Display projects in the "hr" org with "prod" in their name.
 .IP
-tfctl svq --limit 5 --attrs created-at::10
+tfctl pq --org hr --filter 'name@prod'
 
 
