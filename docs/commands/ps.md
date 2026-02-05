@@ -15,13 +15,13 @@ Show a summary of the given plan.
 
 | Flag | Default | Description |
 |------| ------- |-------------|
-| --color/-c |  | Colorize text output. |
+| --color/--no-color |  | Colorize text output. |
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
 | --help |  | Show command help. |
-| --local/-l |  | Show timestamps in local time according to your OS. |
+| --local/--no-local |  | Show timestamps in local time according to your OS. |
 | --output/-o string |  | Output format (text (default), json, yaml, csv). [More info](#output)|
 | --sort/-s string |  | Comma-separated list of fields to sort by. [More info](#sort)|
-| --titles |  | Include column headings in text output. |
+| --titles/--no-titles |  | Include column headings in text output. |
 | --tldr |  | Show tldr page if a client is installed. |
 
 

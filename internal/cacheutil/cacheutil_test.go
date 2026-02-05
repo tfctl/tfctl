@@ -57,12 +57,12 @@ func TestDir_WithoutTFCTL_CACHE_DIR(t *testing.T) {
 func TestEnabled_Default(t *testing.T) {
 	t.Setenv("TFCTL_CACHE", "")
 
-	assert.True(t, Enabled())
+	assert.False(t, Enabled())
 }
 
-// TestEnabled_WithTFCTL_CACHE_Set verifies caching is enabled when
-// TFCTL_CACHE is any value other than "0" or "false".
-func TestEnabled_WithTFCTL_CACHE_Set(t *testing.T) {
+// TestEnabled_With_TFCTL_CACHE_Set verifies caching is disabled when
+// TFCTL_CACHE is any value other than "1" or "true".
+func TestDisabled_With_TFCTL_CACHE_Set(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    string
@@ -70,8 +70,8 @@ func TestEnabled_WithTFCTL_CACHE_Set(t *testing.T) {
 	}{
 		{"1", "1", true},
 		{"true", "true", true},
-		{"yes", "yes", true},
-		{"empty string", "", true},
+		{"yes", "yes", false},
+		{"empty string", "", false},
 		{"0", "0", false},
 		{"false", "false", false},
 	}

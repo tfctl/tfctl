@@ -10,7 +10,8 @@ import (
 	"github.com/tfctl/tfctl/internal/config"
 )
 
-// CacheEntry is provided by cacheutil.Entry; local alias removed to avoid duplication.
+// CacheEntry is provided by cacheutil.Entry; local alias removed to avoid
+// duplication.
 
 // CacheEntryPath returns the path to the cache entry for the given key, if it
 // exists. The cache is organized first by the backend hostname

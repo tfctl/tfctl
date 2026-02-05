@@ -11,7 +11,9 @@ sq:
   test:
     - --output json
     - --sort resource,id
+
 nonstring_list:
   - a
   - { k: v }
-not_a_list: hello
+
+not_a_list: one

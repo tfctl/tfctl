@@ -16,17 +16,17 @@ Query HCP/TFE runs for the given workspace.
 | Flag | Default | Description |
 |------| ------- |-------------|
 | --attrs/-a string |  | Comma-separated list of attributes to include in results. [More info](#attrs)|
-| --color/-c |  | Colorize text output. |
+| --color/--no-color |  | Colorize text output. |
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
 | --help |  | Show command help. |
 | --host/-h string | app.terraform.io | HCP/TFE host to use. Overrides the backend. |
-| --limit/-l int | unlimited | Limit the result set to `int` results. |
-| --local/-l |  | Show timestamps in local time according to your OS. |
+| --limit int | unlimited | Limit the result set to `int` results. |
+| --local/--no-local |  | Show timestamps in local time according to your OS. |
 | --org string |  | Organization to use for all commands. Overrides the backend. |
 | --output/-o string |  | Output format (text (default), json, yaml, csv). [More info](#output)|
 | --schema |  | List of attributes for use with `--attrs`, `--filter`, and '--sort'. |
 | --sort/-s string |  | Comma-separated list of fields to sort by. [More info](#sort)|
-| --titles |  | Include column headings in text output. |
+| --titles/--no-titles |  | Include column headings in text output. |
 | --tldr |  | Show tldr page if a client is installed. |
 | --workspace/-w string | default | Workspace to use for all commands. Overrides the backend. |
 

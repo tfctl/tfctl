@@ -11,11 +11,13 @@ if git diff --cached --name-only --diff-filter=ACMR |
   echo "[pre-commit] generating docs..." >&2
 
   # Build and run the generator (cached by Go build cache)
-  if ! go build -o .git/.docsgen tools/docsgen/main.go; then
+  DOCSGEN_BIN=/tmp/docsgen-$$
+  if ! go build -o "$DOCSGEN_BIN" tools/docsgen/main.go; then
     echo "[pre-commit] docsgen build failed" >&2
     exit 1
   fi
-  .git/.docsgen "${DOCS}"
+  "$DOCSGEN_BIN" "${DOCS}"
+  rm -f "$DOCSGEN_BIN"
 
   # Stage generated artifacts if they changed
   git add "${DOCS}/man/share/man1/*.1" "${DOCS}/tldr/*.md" 2>/dev/null || true

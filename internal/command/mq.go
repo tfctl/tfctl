@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-tfe"
 	"github.com/urfave/cli/v3"
 
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/filters"
 	"github.com/tfctl/tfctl/internal/meta"
 )
@@ -28,6 +29,8 @@ func mqCommandAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	config.Config.Namespace = "mq"
 
 	// Create a fetcher that captures the client in a closure
 	fetcher := func(

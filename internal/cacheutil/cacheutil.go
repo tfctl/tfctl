@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/log"
 )
 
@@ -24,8 +25,7 @@ type Entry struct {
 	Data       []byte
 }
 
-// Dir resolves the base cache directory.
-// Precedence:
+// Dir resolves the base cache directory. Precedence:
 //  1. TFCTL_CACHE_DIR, if set and non-empty
 //  2. os.UserCacheDir()/tfctl
 //
@@ -42,8 +42,14 @@ func Dir() (string, bool) {
 
 // Enabled returns true unless TFCTL_CACHE explicitly disables it ("0"/"false").
 func Enabled() bool {
-	enabled, _ := os.LookupEnv("TFCTL_CACHE")
-	return enabled == "" || (enabled != "0" && enabled != "false")
+	env, _ := os.LookupEnv("TFCTL_CACHE")
+	if env != "" {
+		return env == "1" || env == "true"
+	}
+
+	cfg, _ := config.GetBool("cache.enabled", false)
+
+	return cfg
 }
 
 // EnsureBaseDir creates the base cache directory if caching is enabled and
@@ -83,7 +89,8 @@ func EntryPath(subdirs []string, clearKey string) (string, bool) {
 }
 
 // Purge removes files older than the provided number of hours.
-// If hours <= 0 or the cache dir cannot be resolved, it is a no-op.
+// If hours <= 0 or the cache dir cannot be resolved, it is a no-op.  Empty
+// directories are removed regardless of age.
 func Purge(hours int) error {
 	if hours <= 0 {
 		log.Debug("cache cleaning disabled")
@@ -95,10 +102,11 @@ func Purge(hours int) error {
 		return nil
 	}
 
+	// First walk the entire tree and remove stale files.
 	maxAge := time.Duration(hours) * time.Hour
 	if err := filepath.Walk(base, func(path string, info os.FileInfo, walkErr error) error {
 		// Guard against nil info (can occur if the file disappeared). This is an
-		// unlikely edge case and has only happened when multiple Jenkins run were
+		// unlikely edge case and has only happened when multiple Jenkins runs were
 		// misconfigured and coincidently colllided on the cache entries.
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
@@ -122,6 +130,48 @@ func Purge(hours int) error {
 	}); err != nil {
 		return fmt.Errorf("failed to purge cache: %w", err)
 	}
+
+	// Second, walk back through the tree and remove empty directories. The first
+	// step is to collect all the directories which puts them shallowest to
+	// deepest.  And then iterate backwards through that, removing each one that
+	// is empty.
+	var dirs []string
+	if err := filepath.Walk(base, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			if os.IsNotExist(walkErr) {
+				return nil
+			}
+			return walkErr
+		}
+		if info == nil {
+			return nil
+		}
+		if info.IsDir() {
+			dirs = append(dirs, path)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to collect cache directories: %w", err)
+	}
+
+	// Now kill them if empty.
+	for i := len(dirs) - 1; i >= 0; i-- {
+		dir := dirs[i]
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			log.WithError(err).Warnf("failed to read cache directory %s", dir)
+			continue
+		}
+		if len(entries) == 0 {
+			if err := os.Remove(dir); err == nil {
+				log.Debugf("removed empty cache directory %s", dir)
+			} else {
+				log.WithError(err).Warnf("failed to remove empty cache directory %s", dir)
+			}
+		}
+	}
+
 	return nil
 }
 

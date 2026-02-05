@@ -1,4 +1,4 @@
-.TH tfctl-sq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-sq 1 "February 5, 2026" "tfctl 1.0.0" "tfctl"
 .SH NAME
 tfctl\-sq \- State Query
 .SH SYNOPSIS
@@ -20,12 +20,12 @@ There is also a feature-rich syntax for transforming attribute values. See [Attr
 
 
 .TP
-\fB--chop\fR
+\fB--chop/--no-chop\fR
 Chop common resource prefix from names.
 
 
 .TP
-\fB--color/-c\fR
+\fB--color/--no-color\fR
 Colorize text output.
 
 
@@ -59,7 +59,7 @@ HCP/TFE host to use. Overrides the backend.
 
 
 .TP
-\fB--local/-l\fR
+\fB--local/--no-local\fR
 Show timestamps in local time according to your OS.
 
 
@@ -83,7 +83,7 @@ OpenTofu encrypted state passphrase.
 
 
 .TP
-\fB--short\fR
+\fB--short/--no-short\fR
 Shorten full resource name paths.
 
 
@@ -106,7 +106,7 @@ Can also be relativative. For example, `-1` is the previous version, `-2` is two
 
 
 .TP
-\fB--titles\fR
+\fB--titles/--no-titles\fR
 Include column headings in text output.
 
 
@@ -140,7 +140,7 @@ Display only concrete resources with "vpc" in their type or name.
 tfctl sq --concrete --filter 'resource@vpc'
 
 .TP
-Display the third most recent state file version in JSON format..
+Display the third most recent state file version in JSON format.
 .IP
 tfctl sq --sv -3 --output json
 

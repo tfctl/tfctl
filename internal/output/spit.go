@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"io"
 	"os"
 	"reflect"
@@ -220,13 +221,13 @@ func TableWriter(
 		oddRowStyle  = cellStyle
 	)
 
-	// We apply color styles if coloring is enabled.
+	// And then color styles if --color is present.
 	if cmd.Bool("color") {
 		headerColor, evenColor, oddColor := getColors("colors")
 
-		headerStyle = headerStyle.Foreground(lipgloss.Color(headerColor))
-		evenRowStyle = evenRowStyle.Foreground(lipgloss.Color(evenColor))
-		oddRowStyle = oddRowStyle.Foreground(lipgloss.Color(oddColor))
+		headerStyle = headerStyle.Foreground(headerColor)
+		evenRowStyle = evenRowStyle.Foreground(evenColor)
+		oddRowStyle = oddRowStyle.Foreground(oddColor)
 	}
 
 	// We build the table rows from the result set.
@@ -248,7 +249,8 @@ func TableWriter(
 	}
 
 	// We configure the table with padding and styles.
-	pad, _ := config.GetInt("padding", 0)
+	pad := cmd.Int("padding")
+	// pad, _ := config.GetInt("padding", 0)
 	t := table.New().
 		BorderBottom(false).
 		BorderTop(false).
@@ -356,11 +358,31 @@ func flattenState(resources gjson.Result, short bool) bytes.Buffer {
 	return raw
 }
 
-// getColors returns configured color values for table rendering.
-func getColors(key string) (header string, even string, odd string) {
-	header, _ = config.GetString(fmt.Sprintf("%s.title", key), "#f6be00")
-	even, _ = config.GetString(fmt.Sprintf("%s.even", key), "#ffffff")
-	odd, _ = config.GetString(fmt.Sprintf("%s.odd", key), "#00c8f0")
+// getColors returns configured color values for table rendering. Each color is
+// selected based on terminal background color and brightness so that we can
+// make sure output is reasonably visible for all(?) terminal themes.
+func getColors(key string) (header, even, odd color.Color) {
+	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+
+	// Use the explicit color if found in the config and leave it up to the user
+	// to choose appropriate colors for their theme. If not found, pick a
+	// reasonable default based on terminal background.
+	resolveColor := func(key string, light string, dark string) color.Color {
+		colorCfg, err := config.GetString(key)
+		if err == nil {
+			return lipgloss.Color(colorCfg)
+		}
+
+		if isDark {
+			return lipgloss.Color(dark)
+		}
+		return lipgloss.Color(light)
+	}
+
+	header = resolveColor(key+".title", "#b08800", "#f6be00")
+	even = resolveColor(key+".even", "#333333", "#ffffff")
+	odd = resolveColor(key+".odd", "#0088a0", "#00c8f0")
+
 	return
 }
 

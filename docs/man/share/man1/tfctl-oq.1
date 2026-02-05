@@ -1,4 +1,4 @@
-.TH tfctl-oq 1 "January 17, 2026" "tfctl 0.18.0" "tfctl"
+.TH tfctl-oq 1 "February 5, 2026" "tfctl 1.0.0" "tfctl"
 .SH NAME
 tfctl\-oq \- HCP/TFE Organization Query
 .SH SYNOPSIS
@@ -20,7 +20,7 @@ There is also a feature-rich syntax for transforming attribute values. See [Attr
 
 
 .TP
-\fB--color/-c\fR
+\fB--color/--no-color\fR
 Colorize text output.
 
 
@@ -40,12 +40,12 @@ HCP/TFE host to use. Overrides the backend.
 
 
 .TP
-\fB--limit/-l int\fR
+\fB--limit int\fR
 Limit the result set to `int` results.
 
 
 .TP
-\fB--local/-l\fR
+\fB--local/--no-local\fR
 Show timestamps in local time according to your OS.
 
 
@@ -73,7 +73,7 @@ Prefix field names with `-` to sort in descending order.  For example, `--sort=-
 
 
 .TP
-\fB--titles\fR
+\fB--titles/--no-titles\fR
 Include column headings in text output.
 
 

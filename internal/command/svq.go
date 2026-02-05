@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/go-tfe"
 	"github.com/urfave/cli/v3"
 
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/meta"
 )
 
@@ -22,6 +23,8 @@ var svqDefaultAttrs = []string{".id", "serial", "created-at"}
 // state versions via the active backend, supports --tldr/--schema shortcuts,
 // and emits results per common flags.
 func svqCommandAction(ctx context.Context, cmd *cli.Command) error {
+	config.Config.Namespace = "svq"
+
 	be, err := InitLocalBackendQuery(ctx, cmd)
 	if err != nil {
 		return err

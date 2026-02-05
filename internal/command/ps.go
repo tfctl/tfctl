@@ -40,6 +40,8 @@ var psDefaultAttrs = []string{".resource", ".action"}
 // Terraform plan output from a file or stdin, extracts resource action lines,
 // and displays them in columnar format.
 func psCommandAction(ctx context.Context, cmd *cli.Command) error {
+	config.Config.Namespace = "ps"
+
 	meta := cmd.Metadata["meta"].(meta.Meta)
 	log.Debugf("Executing action for %v", meta.Args[1:])
 

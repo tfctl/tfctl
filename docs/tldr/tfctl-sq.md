@@ -14,6 +14,6 @@
 
 `tfctl sq --concrete --filter 'resource@vpc'`
 
-- Display the third most recent state file version in JSON format..
+- Display the third most recent state file version in JSON format.
 
 `tfctl sq --sv -3 --output json`

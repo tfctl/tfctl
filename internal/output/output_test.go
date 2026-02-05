@@ -322,13 +322,13 @@ func TestGetCommonFields(t *testing.T) {
 }
 
 func TestGetColors(t *testing.T) {
-	// This test verifies that getColors returns strings
+	// This test verifies that getColors returns color.Color values.
 	header, even, odd := getColors("colors")
 
-	// Should return strings (may be empty or defaults)
-	assert.IsType(t, "", header)
-	assert.IsType(t, "", even)
-	assert.IsType(t, "", odd)
+	// Should return non-nil color.Color values.
+	assert.NotNil(t, header)
+	assert.NotNil(t, even)
+	assert.NotNil(t, odd)
 }
 
 // TestTableWriter verifies tabular output formatting.

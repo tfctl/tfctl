@@ -33,7 +33,6 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
-          args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_GORELEASER_PAT }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -52,6 +51,7 @@ jobs:
             --repo tfctl/homebrew-tfctl \
             --title "${{ github.ref_name }}" \
             --notes "Release ${{ github.ref_name }} for Homebrew tap." \
+            --prerelease \
             --latest
         env:
           GH_TOKEN: ${{ secrets.GH_GORELEASER_PAT }}

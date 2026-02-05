@@ -73,6 +73,43 @@ func GetInt(key string, defaultValue ...int) (int, error) {
 	}
 }
 
+// GetBool returns the boolean value for the given dotted key path. A single
+// defaultValue may be provided and is returned when the key is missing.
+// YAML booleans may decode as bool or string; common cases are handled.
+func GetBool(key string, defaultValue ...bool) (bool, error) {
+	if len(Config.Data) == 0 {
+		_, _ = Load()
+	}
+
+	val, err := Config.get(key)
+	if err != nil && Config.Namespace != "" {
+		val, err = Config.get(Config.Namespace + "." + key)
+	}
+
+	if err != nil {
+		if len(defaultValue) == 1 {
+			return defaultValue[0], nil
+		}
+		return false, err
+	}
+
+	switch v := val.(type) {
+	case bool:
+		return v, nil
+	case string:
+		switch strings.ToLower(v) {
+		case "true", "yes", "on", "1":
+			return true, nil
+		case "false", "no", "off", "0":
+			return false, nil
+		default:
+			return false, fmt.Errorf("cannot parse %q as bool", v)
+		}
+	default:
+		return false, errors.New("value is not a bool")
+	}
+}
+
 // GetString returns the string value for the given dotted key path. If the key
 // is not found and a single defaultValue is provided, the default is returned.
 // Returns an error if the value exists but is not a string.
@@ -119,6 +156,9 @@ func GetStringSlice(key string, defaultValue ...[]string) ([]string, error) {
 	switch v := val.(type) {
 	case []string:
 		return v, nil
+	case string:
+		// Single string treated as single-element slice
+		return []string{v}, nil
 	case []interface{}:
 		result := make([]string, len(v))
 		for i, item := range v {

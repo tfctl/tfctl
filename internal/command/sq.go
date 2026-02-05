@@ -26,6 +26,8 @@ import (
 // Terraform state (including optional decryption), supports --tldr short-
 // circuit, and emits results per common flags.
 func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
+	config.Config.Namespace = "sq"
+
 	m := GetMeta(cmd)
 	log.Debugf("Executing action for %v", m.Args[1:])
 
@@ -33,8 +35,6 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 	if ShortCircuitTLDR(ctx, cmd, "sq") {
 		return nil
 	}
-
-	config.Config.Namespace = "sq"
 
 	// Figure out what type of Backend we're in.
 	be, err := backend.NewBackend(ctx, *cmd)
@@ -129,9 +129,10 @@ func sqCommandBuilder(meta meta.Meta) *cli.Command {
 		},
 		Flags: append([]cli.Flag{
 			&cli.BoolFlag{
-				Name:  "chop",
-				Usage: "chop common resource prefix from names",
-				Value: false,
+				Name:    "chop",
+				Aliases: []string{"no-chop"},
+				Usage:   "chop common resource prefix from names",
+				Value:   false,
 			},
 			&cli.BoolFlag{
 				Name:    "concrete",
@@ -156,9 +157,10 @@ func sqCommandBuilder(meta meta.Meta) *cli.Command {
 				Value:  99999,
 			},
 			&cli.BoolFlag{
-				Name:  "short",
-				Usage: "include full resource name paths",
-				Value: false,
+				Name:    "short",
+				Aliases: []string{"no-short"},
+				Usage:   "include full resource name paths",
+				Value:   false,
 			},
 			&cli.StringFlag{
 				Name:  "passphrase",
@@ -179,10 +181,9 @@ func sqCommandBuilder(meta meta.Meta) *cli.Command {
 			workspaceFlag,
 		}, NewGlobalFlags("sq")...),
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			// If --chop is set, --short must not be set.
-			if cmd.Bool("chop") {
-				_ = cmd.Set("short", "false")
-			}
+			ResolveInverseFlags(cmd, meta.Args, []string{
+				"chop", "color", "local", "titles", "short",
+			})
 
 			return ctx, GlobalFlagsValidator(ctx, cmd)
 		},

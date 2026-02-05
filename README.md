@@ -102,7 +102,7 @@ tfctl wq --attrs created-at,updated-at --output json
 - **[Command Reference](docs/flags.md)** - Complete flag documentation
 - **[Attribute Guide](docs/attrs.md)** - Advanced filtering techniques
 - **[Filter Expressions](docs/filters.md)** - Query syntax reference
-- **[Environment Variables](docs/environment.md)** - Configuration via environment variables
+- **[Configuration](docs/configuration.md)** - Configuration file and environment variables
 
 ## Roadmap
 

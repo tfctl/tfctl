@@ -16,21 +16,21 @@ Query Terraform state files.
 | Flag | Default | Description |
 |------| ------- |-------------|
 | --attrs/-a string |  | Comma-separated list of attributes to include in results. [More info](#attrs)|
-| --chop |  | Chop common resource prefix from names. |
-| --color/-c |  | Colorize text output. |
+| --chop/--no-chop |  | Chop common resource prefix from names. |
+| --color/--no-color |  | Colorize text output. |
 | --concrete/-k |  | Only include concrete resources. |
 | --diff [ old[:new] \| + ] | CSV~1 CSV~0 | Find differences between state versions. [More info](#diff)|
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
 | --help |  | Show command help. |
 | --host/-h string | app.terraform.io | HCP/TFE host to use. Overrides the backend. |
-| --local/-l |  | Show timestamps in local time according to your OS. |
+| --local/--no-local |  | Show timestamps in local time according to your OS. |
 | --org string |  | Organization to use for all commands. Overrides the backend. |
 | --output/-o string |  | Output format (text (default), json, yaml, csv). [More info](#output)|
 | --passphrase string |  | OpenTofu encrypted state passphrase. |
-| --short | false | Shorten full resource name paths. |
+| --short/--no-short | false | Shorten full resource name paths. |
 | --sort/-s string |  | Comma-separated list of fields to sort by. [More info](#sort)|
 | --sv string | latest | State version to query.  Can be a version number, `latest`, or `earliest`. [More info](#sv)|
-| --titles |  | Include column headings in text output. |
+| --titles/--no-titles |  | Include column headings in text output. |
 | --tldr |  | Show tldr page if a client is installed. |
 | --workspace/-w string | default | Workspace to use for all commands. Overrides the backend. |
 
@@ -86,7 +86,7 @@ tfctl sq --concrete --filter 'resource@vpc'
 ```
 
 
-**Display the third most recent state file version in JSON format..**
+**Display the third most recent state file version in JSON format.**
 
 ```sh
 tfctl sq --sv -3 --output json

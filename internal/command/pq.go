@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/tfctl/tfctl/internal/backend/remote"
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/filters"
 	"github.com/tfctl/tfctl/internal/meta"
 )
@@ -23,6 +24,9 @@ var pqDefaultAttrs = []string{".id", "name"}
 // projects for the selected organization, supports --tldr/--schema
 // short-circuit behavior, and emits output per common flags.
 func pqCommandAction(ctx context.Context, cmd *cli.Command) error {
+
+	config.Config.Namespace = "oq"
+
 	be, org, client, err := InitRemoteOrgQuery(ctx, cmd)
 	if err != nil {
 		return err

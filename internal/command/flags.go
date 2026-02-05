@@ -45,7 +45,7 @@ func NewGlobalFlags(params ...string) (flags []cli.Flag) {
 		},
 		&cli.BoolFlag{
 			Name:    "color",
-			Aliases: []string{"c"},
+			Aliases: []string{"no-color"},
 			Usage:   "enable colored text output",
 			Value:   false,
 		},
@@ -56,7 +56,7 @@ func NewGlobalFlags(params ...string) (flags []cli.Flag) {
 		},
 		&cli.BoolFlag{
 			Name:    "local",
-			Aliases: []string{"l"},
+			Aliases: []string{"no-local"},
 			Usage:   "show local timestamps",
 			Value:   false,
 		},
@@ -69,6 +69,11 @@ func NewGlobalFlags(params ...string) (flags []cli.Flag) {
 				return FlagValidators(value, OutputValidator)
 			},
 		},
+		&cli.IntFlag{
+			Name:  "padding",
+			Usage: "additional inter-column spacing in text output",
+			Value: 5,
+		},
 		&cli.StringFlag{
 			Name:    "sort",
 			Aliases: []string{"s"},
@@ -76,8 +81,8 @@ func NewGlobalFlags(params ...string) (flags []cli.Flag) {
 		},
 		&cli.BoolFlag{
 			Name:    "titles",
-			Aliases: []string{"t"},
-			Usage:   "show titles with text output",
+			Aliases: []string{"no-titles"},
+			Usage:   "show titles with text output (--titles=0 to disable preset)",
 			Value:   false,
 		},
 	}
@@ -143,6 +148,23 @@ func NameSpacedValueChainFlagFromConfigFile(ns string, path string, flag *cli.St
 	flag.Sources.Chain = append(flag.Sources.Chain, src)
 
 	return flag
+}
+
+// ResolveInverseFlags scans args for --flag and --no-flag patterns and sets
+// the flag value based on the last occurrence (last one wins). This enables
+// presets to be overridden on the command line.
+func ResolveInverseFlags(cmd *cli.Command, args []string, flags []string) {
+	for _, f := range flags {
+		for i := len(args) - 1; i >= 0; i-- {
+			if args[i] == "--"+f {
+				_ = cmd.Set(f, "true")
+				break
+			} else if args[i] == "--no-"+f {
+				_ = cmd.Set(f, "false")
+				break
+			}
+		}
+	}
 }
 
 // pathHas checks if the given key exists in cfg.Source.

@@ -53,6 +53,7 @@ release:
   github:
     owner: tfctl
     name: tfctl
+  draft: true
   mode: replace
   footer: >-
 
@@ -86,7 +87,7 @@ nfpms:
     vendor: Steve Taranto
     maintainer: Steve Taranto staranto@gmail.com
     homepage: https://github.com/tfctl/tfctl
-    description: CLI to query Terraform/OpenTofu state across backends
+    description: CLI for Terraform query and control
     license: Apache-2.0
     bindir: /usr/local/bin
     formats:
@@ -94,11 +95,12 @@ nfpms:
     contents:
       - src: docs/man/share/man1/*
         dst: /usr/share/man/man1/
-      # Optionally include license/readme too
       - src: LICENSE*
         dst: /usr/share/doc/tfctl/
       - src: README.md
         dst: /usr/share/doc/tfctl/
+      - src: docs/tldr/*
+        dst: /usr/share/doc/tfctl/tldr/
 
 signs:
   - artifacts: all

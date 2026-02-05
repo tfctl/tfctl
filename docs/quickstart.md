@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - `tfctl` installed and in your PATH. If installed via Homebrew or the Debian package, manual pages are available (e.g., `man tfctl`).
-  - If you installed from a tarball, see “Install man pages (from tarball)” and “Install TLDR pages (from tarball)” in [install.md](installation.md) to set up local man and TLDR pages.
+  - If you installed from a tarball, see "Install man pages (from tarball)" and "Install TLDR pages (from tarball)" in [installation.md](installation.md) to set up local man and TLDR pages.
 - An access token ([`terraform login`](https://developer.hashicorp.com/terraform/cli/commands/login) or [manual configuration](https://developer.hashicorp.com/terraform/cli/config/config-file#credentials)) for remote queries stored in HCP or TFE workspaces,
 - A Terraform workspace to query (local or remote).
 

@@ -38,8 +38,12 @@ func (qcb *QueryCommandBuilder) Build() *cli.Command {
 			tldrFlag,
 			schemaFlag,
 		}, NewGlobalFlags(qcb.Name)...)...),
-		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
-			return ctx, GlobalFlagsValidator(ctx, c)
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			ResolveInverseFlags(cmd, qcb.Meta.Args, []string{
+				"chop", "color", "local", "titles", "short",
+			})
+
+			return ctx, GlobalFlagsValidator(ctx, cmd)
 		},
 		Action: qcb.Action,
 	}

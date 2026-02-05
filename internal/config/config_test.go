@@ -533,6 +533,11 @@ func TestGetStringSlice_SimpleAndNested(t *testing.T) {
 		vals, err = GetStringSlice("nested.inner.list")
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"one", "two three"}, vals)
+
+		vals, err = GetStringSlice("not_a_list")
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"one"}, vals)
+
 	})
 }
 
@@ -557,10 +562,6 @@ func TestGetStringSlice_ErrorCases(t *testing.T) {
 		}
 		// Non-string element in list
 		_, err := GetStringSlice("nonstring_list")
-		assert.Error(t, err)
-
-		// Not a list
-		_, err = GetStringSlice("not_a_list")
 		assert.Error(t, err)
 
 		// Missing key with default slice returns provided default.

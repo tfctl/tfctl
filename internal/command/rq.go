@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-tfe"
 	"github.com/urfave/cli/v3"
 
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/meta"
 )
 
@@ -21,6 +22,8 @@ var rqDefaultAttrs = []string{".id", "created-at", "status"}
 // runs via the active backend, supports --tldr/--schema shortcuts, and
 // emits results per common flags.
 func rqCommandAction(ctx context.Context, cmd *cli.Command) error {
+	config.Config.Namespace = "rq"
+
 	be, err := InitLocalBackendQuery(ctx, cmd)
 	if err != nil {
 		return err
