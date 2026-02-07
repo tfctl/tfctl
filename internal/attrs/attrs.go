@@ -19,16 +19,13 @@ import (
 // Attr represents each of the keys to be included in the output. These are
 // typically identified by the JSON attributes key, thus the name.
 type Attr struct {
-	// The JSON key to extract from the result JSON object.
-	Key string `yaml:"key" json:"Key"`
-	// Should this Attr be included in output or is it just
-	// intended for filtering and sorting?
-	Include bool `yaml:"include" json:"Include"`
-	// The key to use in the output. This is also used as the column title when
-	// output=text. TODO Consider a separate title field.
-	OutputKey string `yaml:"outputKey" json:"OutputKey"`
-	// Transformation spec to apply to the output value.
-	TransformSpec string `yaml:"transformSpec" json:"TransformSpec"`
+	// Input configuration
+	Key string `yaml:"key" json:"Key"` // The JSON key to extract from the result JSON object
+
+	// Output configuration
+	Include    bool   `yaml:"include" json:"Include"`       // Should this Attr be included in output or is it just intended for filtering and sorting?
+	OutputKey  string `yaml:"outputKey" json:"OutputKey"`   // The key to use in the output. This is also used as the column title when output=text
+	TransformSpec string `yaml:"transformSpec" json:"TransformSpec"` // Transformation spec to apply to the output value
 }
 
 // Transform applies the attribute's transform spec to a value and returns the

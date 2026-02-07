@@ -30,18 +30,19 @@ var DefaultListOptions = tfe.ListOptions{
 
 // BuildAttrs constructs an AttrList with defaults and optional extras from
 // --attrs, then applies the global transform spec.
-func BuildAttrs(cmd *cli.Command, defaults ...string) (al attrs.AttrList) {
-	//nolint:errcheck
+func BuildAttrs(cmd *cli.Command, defaults ...string) attrs.AttrList {
+	var attrList attrs.AttrList
+	//nolint:errcheck // AttrList.Set errors are logged internally
 	{
-		for _, d := range defaults {
-			al.Set(d)
+		for _, defaultAttr := range defaults {
+			attrList.Set(defaultAttr)
 		}
 		if extras := cmd.String("attrs"); extras != "" {
-			al.Set(extras)
+			attrList.Set(extras)
 		}
-		al.SetGlobalTransformSpec()
+		attrList.SetGlobalTransformSpec()
 	}
-	return
+	return attrList
 }
 
 // DumpSchemaIfRequested writes the JSON schema for the provided type to stdout

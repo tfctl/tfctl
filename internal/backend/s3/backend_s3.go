@@ -27,22 +27,29 @@ import (
 )
 
 type BackendS3 struct {
-	Ctx              context.Context
-	Cmd              *cli.Command
-	RootDir          string `json:"-" validate:"dir"`
-	EnvOverride      string
-	SvOverride       string
-	Version          int    `json:"version" validate:"gte=3"`
+	// Runtime context
+	Cmd *cli.Command
+	Ctx context.Context
+
+	// Configuration overrides
+	EnvOverride string
+	RootDir     string `json:"-" validate:"dir"`
+	SvOverride  string
+
+	// Version info
 	TerraformVersion string `json:"terraform_version" validate:"semver"`
-	Backend          struct {
+	Version          int    `json:"version" validate:"gte=3"`
+
+	// Backend configuration
+	Backend struct {
 		Type   string `json:"type" validate:"eq=local"`
 		Config struct {
 			Bucket   string `json:"bucket"`
+			Encrypt  bool   `json:"encrypt"`
 			Key      string `json:"key"`
+			KmsKeyID string `json:"kms_key_id"`
 			Prefix   string `json:"workspace_key_prefix"`
 			Region   string `json:"region"`
-			Encrypt  bool   `json:"encrypt"`
-			KmsKeyID string `json:"kms_key_id"`
 		} `json:"config"`
 		Hash int `json:"hash"`
 	} `json:"backend"`

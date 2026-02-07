@@ -24,16 +24,25 @@ import (
 )
 
 type BackendRemote struct {
-	Ctx              context.Context
-	Cmd              *cli.Command
-	RootDir          string `json:"-" validate:"dir"`
-	EnvOverride      string
-	SvOverride       string
+	// Runtime context
+	Cmd *cli.Command
+	Ctx context.Context
+
+	// Configuration overrides
+	EnvOverride string
+	RootDir     string `json:"-" validate:"dir"`
+	SvOverride  string
+
+	// Version info
+	TerraformVersion string `json:"terraform_version" validate:"semver"`
+	Version          int    `json:"version" validate:"gte=4"`
+
+	// Cached data
 	RunList          []*tfe.Run
 	StateVersionList []*tfe.StateVersion
-	Version          int    `json:"version" validate:"gte=4"`
-	TerraformVersion string `json:"terraform_version" validate:"semver"`
-	Backend          struct {
+
+	// Backend configuration
+	Backend struct {
 		Type   string `json:"type" validate:"eq=remote"`
 		Hash   int    `json:"hash"`
 		Config struct {

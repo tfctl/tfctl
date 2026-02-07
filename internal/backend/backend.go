@@ -23,12 +23,17 @@ import (
 
 // Type holds common backend resolution context and flags.
 type Type struct {
-	Ctx         context.Context
-	Cmd         *cli.Command
-	RootDir     string `json:"-" validate:"dir"`
+	// Runtime context
+	Cmd *cli.Command
+	Ctx context.Context
+
+	// Configuration
 	EnvOverride string
-	// Version          int    `json:"version" validate:"gte=4"`
+	RootDir     string `json:"-" validate:"dir"`
+
+	// Version info (currently unused)
 	// TerraformVersion string `json:"terraform_version" validate:"semver"`
+	// Version          int    `json:"version" validate:"gte=4"`
 }
 
 // Backend abstracts Terraform/OpenTofu backend interactions needed by the
@@ -55,101 +60,101 @@ type SelfDiffer interface {
 // NewBackend returns the appropriate Backend implementation for the working
 // directory represented by the resolved root dir in command metadata.
 func NewBackend(ctx context.Context, cmd cli.Command) (Backend, error) {
-	meta := cmd.Metadata["meta"].(meta.Meta)
-	log.Debugf("NewBackend: meta: %v", meta)
+	cmdMeta := cmd.Metadata["meta"].(meta.Meta)
+	log.Debugf("NewBackend: meta: %v", cmdMeta)
 
-	cFile, cErr := os.Stat(filepath.Join(meta.RootDir, ".terraform", "terraform.tfstate"))
-	sFile, sErr := os.Stat(filepath.Join(meta.RootDir, "terraform.tfstate"))
-	eFile, eErr := os.Stat(filepath.Join(meta.RootDir, ".terraform", "environment"))
-	_, _, _ = cFile, sFile, eFile // HACK
+	configFile, configErr := os.Stat(filepath.Join(cmdMeta.RootDir, ".terraform", "terraform.tfstate"))
+	stateFile, stateErr := os.Stat(filepath.Join(cmdMeta.RootDir, "terraform.tfstate"))
+	envFile, envErr := os.Stat(filepath.Join(cmdMeta.RootDir, ".terraform", "environment"))
+	_, _, _ = configFile, stateFile, envFile // Used only for existence check, values unused
 
 	// Maybe we're in a non-sq command and just need a naked remote. This will be
-	// when c, s and e are all in error meaning none of them exist.
-	if cErr != nil && sErr != nil && eErr != nil {
+	// when config, state and env are all in error meaning none of them exist.
+	if configErr != nil && stateErr != nil && envErr != nil {
 		return remote.NewBackendRemote(ctx, &cmd, remote.BuckNaked())
 	}
 
 	// If terraform.tfstate exists but .terraform/terraform.tfstate doesn't,
 	// infer local backend. This is an empty terraform.backend {} block use case.
-	if cErr != nil && sErr == nil {
+	if configErr != nil && stateErr == nil {
 		return local.NewBackendLocal(ctx, &cmd,
-			local.FromRootDir(meta.RootDir),
-			local.WithEnvOverride(meta.Env),
+			local.FromRootDir(cmdMeta.RootDir),
+			local.WithEnvOverride(cmdMeta.Env),
 		)
 	}
 
 	// If .terraform/terraform.tfstate and terraform.tfstate don't exist but
 	// .terraform/environment does, we're in a local backend with multi-workspace
 	// configuration. The environment file points to the workspace directory.
-	if cErr != nil && sErr != nil && eErr == nil {
+	if configErr != nil && stateErr != nil && envErr == nil {
 		return local.NewBackendLocal(ctx, &cmd,
-			local.FromRootDir(meta.RootDir),
-			local.WithEnvOverride(meta.Env),
+			local.FromRootDir(cmdMeta.RootDir),
+			local.WithEnvOverride(cmdMeta.Env),
 		)
 	}
 
 	// Peek at the backend type so we can switch on it.
-	// TODO We're double reading the file. Once in peek() and once in the New().
-	typ, err := peek(meta)
+	// TODO: We're double reading the file. Once in peek() and once in the New().
+	backendType, err := peek(cmdMeta)
 	if err != nil {
 		return nil, err
 	}
 
 	var result Backend
-	switch typ {
+	switch backendType {
 	case "cloud":
-		var beCloud *cloud.BackendCloud
-		beCloud, err = cloud.NewBackendCloud(ctx, &cmd,
-			cloud.FromRootDir(meta.RootDir),
-			cloud.WithEnvOverride(meta.Env),
+		var cloudBackend *cloud.BackendCloud
+		cloudBackend, err = cloud.NewBackendCloud(ctx, &cmd,
+			cloud.FromRootDir(cmdMeta.RootDir),
+			cloud.WithEnvOverride(cmdMeta.Env),
 		)
-		// Preserve prior behavior: return transformed backend alongside any error
-		result = beCloud.Transform2Remote(ctx, &cmd)
+		// Preserve prior behavior: return transformed backend alongside any error.
+		result = cloudBackend.Transform2Remote(ctx, &cmd)
 	case "local":
 		result, err = local.NewBackendLocal(ctx, &cmd,
-			local.FromRootDir(meta.RootDir),
-			local.WithEnvOverride(meta.Env),
+			local.FromRootDir(cmdMeta.RootDir),
+			local.WithEnvOverride(cmdMeta.Env),
 		)
 	case "remote":
 		result, err = remote.NewBackendRemote(ctx, &cmd,
-			remote.FromRootDir(meta.RootDir),
-			remote.WithEnvOverride(meta.Env),
+			remote.FromRootDir(cmdMeta.RootDir),
+			remote.WithEnvOverride(cmdMeta.Env),
 			remote.WithSvOverride(),
 		)
 	case "s3":
 		result, err = s3.NewBackendS3(ctx, &cmd,
-			s3.FromRootDir(meta.RootDir),
-			s3.WithEnvOverride(meta.Env),
+			s3.FromRootDir(cmdMeta.RootDir),
+			s3.WithEnvOverride(cmdMeta.Env),
 			s3.WithSvOverride(),
 		)
 	default:
-		return nil, fmt.Errorf("unknown type %s: %w", typ, err)
+		return nil, fmt.Errorf("unknown type %s: %w", backendType, err)
 	}
 
 	return result, err
 }
 
 // peek returns the backend type by reading the local terraform state file.
-func peek(meta meta.Meta) (string, error) {
-	raw, err := os.ReadFile(filepath.Join(meta.RootDir, ".terraform", "terraform.tfstate"))
+func peek(cmdMeta meta.Meta) (string, error) {
+	raw, err := os.ReadFile(filepath.Join(cmdMeta.RootDir, ".terraform", "terraform.tfstate"))
 	if err != nil {
 		return "", err
 	}
 
-	var peeker map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &peeker); err != nil {
+	var parsedData map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &parsedData); err != nil {
 		return "", fmt.Errorf("can't peek: %w", err)
 	}
 
-	if err := json.Unmarshal(peeker["backend"], &peeker); err != nil {
+	if err := json.Unmarshal(parsedData["backend"], &parsedData); err != nil {
 		return "", fmt.Errorf("can't peek: %w", err)
 	}
 
-	var typ string
-	if err := json.Unmarshal(peeker["type"], &typ); err != nil {
+	var backendType string
+	if err := json.Unmarshal(parsedData["type"], &backendType); err != nil {
 		return "", fmt.Errorf("can't peek: %w", err)
 	}
-	log.Debugf("type: %s", typ)
+	log.Debugf("type: %s", backendType)
 
-	return typ, nil
+	return backendType, nil
 }

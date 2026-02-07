@@ -32,7 +32,7 @@ func Hitter(be *BackendRemote, url string) (bytes.Buffer, error) {
 		return bytes.Buffer{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	//nolint:forcetypeassert
+	//nolint:forcetypeassert // Token validated as string during backend initialization
 	req.Header.Set("Authorization", "Bearer "+be.Backend.Config.Token.(string))
 
 	http := &http.Client{}

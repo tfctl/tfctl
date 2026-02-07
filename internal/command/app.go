@@ -31,16 +31,16 @@ func InitApp(ctx context.Context, args []string) (*cli.Command, error) {
 	// subcommand and also represents the namespace key to be used when retrieving
 	// config values. arg[1] could be -h/--help, so ignore it if it appears to be
 	// a flag.
-	var ns string
+	var namespace string
 	if len(args) > 1 && !strings.HasPrefix(args[1], "-") {
-		ns = args[1]
+		namespace = args[1]
 	}
 
-	// allow short if-style local cfg; no actual outer cfg
-	cfg2, _ := config.Load(ns) //nolint
+	// Allow short if-style local cfg; no actual outer cfg.
+	appConfig, _ := config.Load(namespace) //nolint:errcheck // Config loading errors are non-fatal
 	meta := meta.Meta{
 		Args:        args,
-		Config:      cfg2,
+		Config:      appConfig,
 		Context:     ctx,
 		StartingDir: sd,
 	}
@@ -52,7 +52,7 @@ func InitApp(ctx context.Context, args []string) (*cli.Command, error) {
 	// Special-case the 'completion' and 'ps' commands which take a plain
 	// positional argument (e.g., 'bash' or 'zsh' for completion, plan file
 	// for ps).
-	if (ns != "completion" && ns != "ps") && len(args) > 2 && !strings.HasPrefix(args[2], "-") {
+	if (namespace != "completion" && namespace != "ps") && len(args) > 2 && !strings.HasPrefix(args[2], "-") {
 		if wd, env, err := util.ParseRootDir(args[2]); err == nil {
 			meta.RootDir = wd
 			meta.Env = env

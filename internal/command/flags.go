@@ -36,8 +36,8 @@ var (
 	}
 )
 
-func NewGlobalFlags(params ...string) (flags []cli.Flag) {
-	flags = []cli.Flag{
+func NewGlobalFlags(params ...string) []cli.Flag {
+	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:    "attrs",
 			Aliases: []string{"a"},
@@ -87,15 +87,15 @@ func NewGlobalFlags(params ...string) (flags []cli.Flag) {
 		},
 	}
 
-	return
+	return flags
 }
 
 // NewHostFlag constructs a cli.StringFlag for the "host" flag, optionally
-// namespaced to a command and config file.  params[1] is the config file.  Note
+// namespaced to a command and config file. params[1] is the config file. Note
 // that currently the sq command does not include params[1], thereby forcing the
 // host to be derived from the backend or explicit flag.
-func NewHostFlag(params ...string) (flag *cli.StringFlag) {
-	flag = &cli.StringFlag{
+func NewHostFlag(params ...string) *cli.StringFlag {
+	hostFlag := &cli.StringFlag{
 		Name:    "host",
 		Aliases: []string{"h"},
 		Usage:   "host to use for all commands. Overrides the backend",
@@ -107,18 +107,18 @@ func NewHostFlag(params ...string) (flag *cli.StringFlag) {
 	}
 
 	if len(params) == 2 {
-		flag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], flag)
+		hostFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], hostFlag)
 	}
 
-	return
+	return hostFlag
 }
 
 // NewOrgFlag constructs a cli.StringFlag for the "org" flag, optionally
-// namespaced to a command and config file. params[1] is the config file.  Note
+// namespaced to a command and config file. params[1] is the config file. Note
 // that currently the sq command does not include params[1], thereby forcing the
 // org to be derived from the backend or explicit flag.
-func NewOrgFlag(params ...string) (flag *cli.StringFlag) {
-	flag = &cli.StringFlag{
+func NewOrgFlag(params ...string) *cli.StringFlag {
+	orgFlag := &cli.StringFlag{
 		Name:  "org",
 		Usage: "organization to use for all commands. Overrides the backend",
 		Sources: cli.NewValueSourceChain(
@@ -132,10 +132,10 @@ func NewOrgFlag(params ...string) (flag *cli.StringFlag) {
 	// to infer a value and instead derive it from the .terraform/
 	// terraform.tfstate.
 	if len(params) == 2 {
-		flag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], flag)
+		orgFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], orgFlag)
 	}
 
-	return
+	return orgFlag
 }
 
 // NameSpacedValueChainFlagFromConfigFile adds namespaced and global config file

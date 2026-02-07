@@ -65,7 +65,7 @@ func EnsureBaseDir() (string, bool, error) {
 		return "", false, nil
 	}
 
-	if err := os.MkdirAll(base, 0o755); err != nil { //nolint:mnd
+	if err := os.MkdirAll(base, 0o755); err != nil { //nolint:mnd // Standard directory permissions
 		return base, false, fmt.Errorf("failed to create cache base directory: %w", err)
 	}
 	log.Debugf("created cache dir: path=%s", base)
@@ -210,11 +210,11 @@ func Write(subdirs []string, clearKey string, data []byte) error {
 	}
 	encoded := encodeKey(clearKey)
 	dir := filepath.Join(append([]string{base}, subdirs...)...)
-	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:mnd
+	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:mnd // Standard directory permissions
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 	p := filepath.Join(dir, encoded)
-	if err := os.WriteFile(p, data, os.FileMode(0o600)); err != nil { //nolint:mnd
+	if err := os.WriteFile(p, data, os.FileMode(0o600)); err != nil { //nolint:mnd // Standard file permissions (owner read/write only)
 		return fmt.Errorf("failed to write to cache: %w", err)
 	}
 	log.Debugf("cache write: key=%s", clearKey)

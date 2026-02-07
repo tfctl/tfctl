@@ -23,12 +23,13 @@ type schemaTag struct {
 }
 
 // print renders the tag into its display form.
-func (t schemaTag) print() (out string) {
+func (t schemaTag) print() string {
 	parts := []string{}
 	if t.Name != "" {
 		parts = append(parts, t.Name)
 	}
-	return strings.Join(parts, ",")
+	output := strings.Join(parts, ",")
+	return output
 }
 
 // maxSchemaDepth limits the depth of schema walking to prevent infinite

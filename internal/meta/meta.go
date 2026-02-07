@@ -20,9 +20,14 @@ type RootDirSpec struct {
 // loaded configuration, context, the resolved root directory specification, and
 // the starting working directory.
 type Meta struct {
-	Args    []string
-	Config  config.Type
+	// Runtime context
 	Context context.Context
+
+	// Configuration
+	Args   []string
+	Config config.Type
 	RootDirSpec
+
+	// Directory tracking
 	StartingDir string
 }

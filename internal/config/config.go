@@ -25,9 +25,12 @@ import (
 // Note: Data is intentionally kept as map[string]any to allow flexible shapes.
 // Callers should use typed getters (GetString, GetInt) for convenience.
 type Type struct {
-	Source    string
+	// Configuration data
+	Data map[string]interface{}
+
+	// Metadata
 	Namespace string
-	Data      map[string]interface{}
+	Source    string
 }
 
 // Config holds the global, lazily-initialized configuration instance.

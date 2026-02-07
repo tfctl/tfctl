@@ -31,19 +31,20 @@ var filterRegex = regexp.MustCompile(`^(_)?([^!?=^~<>@/]*)(!?[=^~<>@/])?(.*)$`)
 // Filter is a single parsed --filter expression including the key, operand,
 // optional negation, server-side flag and value to match against.
 type Filter struct {
-	Key        string `yaml:"key" json:"Key"`
-	Negate     bool   `yaml:"negate" json:"Negate"`
-	Operand    string `yaml:"operand" json:"Operand"`
-	ServerSide bool   `yaml:"serverSide" json:"ServerSide"`
-	Value      string `yaml:"value" json:"Value"`
+	// Filter criteria
+	Key     string `yaml:"key" json:"Key"`
+	Operand string `yaml:"operand" json:"Operand"`
+	Value   string `yaml:"value" json:"Value"`
+
+	// Filter modifiers
+	Negate     bool `yaml:"negate" json:"Negate"`
+	ServerSide bool `yaml:"serverSide" json:"ServerSide"`
 }
 
 // BuildFilters parses a filter specification string into a slice of Filter.
 // Invalid specs (unsupported operand or malformed expression) are skipped.
 func BuildFilters(spec string) []Filter {
-	// Don't prealloc because we don't know what len will be and performance is
-	// not critical.
-	//nolint:prealloc
+	//nolint:prealloc // Don't prealloc because we don't know what len will be and performance is not critical
 	var filters []Filter
 
 	// If there are no filters specified, go home early.

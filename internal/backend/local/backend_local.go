@@ -24,13 +24,20 @@ import (
 // BackendLocal is a struct that represents a local backend configuration.
 // https://developer.hashicorp.com/terraform/language/backend/local
 type BackendLocal struct {
-	Ctx              context.Context
-	Cmd              *cli.Command
-	RootDir          string `json:"-" validate:"dir"`
-	EnvOverride      string
-	Version          int    `json:"version" validate:"gte=4"`
+	// Runtime context
+	Cmd *cli.Command
+	Ctx context.Context
+
+	// Configuration overrides
+	EnvOverride string
+	RootDir     string `json:"-" validate:"dir"`
+
+	// Version info
 	TerraformVersion string `json:"terraform_version" validate:"semver"`
-	Backend          struct {
+	Version          int    `json:"version" validate:"gte=4"`
+
+	// Backend configuration
+	Backend struct {
 		Type   string `json:"type" validate:"eq=local"`
 		Config struct {
 			Path         string `json:"path"`
