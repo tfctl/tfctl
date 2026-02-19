@@ -3,7 +3,6 @@
 // no-cloc
 
 //go:build integration
-// +build integration
 
 package aws
 

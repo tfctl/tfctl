@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"io"
 	"os"
 	"reflect"
@@ -16,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-	"github.com/charmbracelet/lipgloss/v2"
-	"github.com/charmbracelet/lipgloss/v2/table"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v2"
@@ -361,13 +360,13 @@ func flattenState(resources gjson.Result, short bool) bytes.Buffer {
 // getColors returns configured color values for table rendering. Each color is
 // selected based on terminal background color and brightness so that we can
 // make sure output is reasonably visible for all(?) terminal themes.
-func getColors(key string) (header, even, odd color.Color) {
-	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+func getColors(key string) (header, even, odd lipgloss.TerminalColor) {
+	isDark := lipgloss.HasDarkBackground()
 
 	// Use the explicit color if found in the config and leave it up to the user
 	// to choose appropriate colors for their theme. If not found, pick a
 	// reasonable default based on terminal background.
-	resolveColor := func(key string, light string, dark string) color.Color {
+	resolveColor := func(key string, light string, dark string) lipgloss.TerminalColor {
 		colorCfg, err := config.GetString(key)
 		if err == nil {
 			return lipgloss.Color(colorCfg)
