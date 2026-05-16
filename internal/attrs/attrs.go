@@ -23,8 +23,8 @@ type Attr struct {
 	Key string `yaml:"key" json:"Key"` // The JSON key to extract from the result JSON object
 
 	// Output configuration
-	Include    bool   `yaml:"include" json:"Include"`       // Should this Attr be included in output or is it just intended for filtering and sorting?
-	OutputKey  string `yaml:"outputKey" json:"OutputKey"`   // The key to use in the output. This is also used as the column title when output=text
+	Include       bool   `yaml:"include" json:"Include"`             // Should this Attr be included in output or is it just intended for filtering and sorting?
+	OutputKey     string `yaml:"outputKey" json:"OutputKey"`         // The key to use in the output. This is also used as the column title when output=text
 	TransformSpec string `yaml:"transformSpec" json:"TransformSpec"` // Transformation spec to apply to the output value
 }
 
@@ -45,13 +45,8 @@ func (a *Attr) Transform(value interface{}) interface{} {
 
 	// Convert UTC time to local or time ago.
 	if strings.ContainsAny(a.TransformSpec, "tT") {
-		now := time.Now()
-		tz, _ := now.In(time.Local).Zone()
-		if tz == "" {
-			return result
-		}
-		loc, err := time.LoadLocation(tz)
-		if err != nil {
+		loc := time.Now().Location()
+		if loc == nil {
 			return result
 		}
 		t, err := time.Parse(time.RFC3339, result)
