@@ -6,6 +6,9 @@ package output
 
 import (
 	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -13,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/tfctl/tfctl/internal/attrs"
 )
@@ -722,5 +726,113 @@ func BenchmarkInterfaceToString(b *testing.B) {
 		for _, v := range values {
 			InterfaceToString(v)
 		}
+	}
+}
+
+func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
+	tests := []struct {
+		name      string
+		output    string
+		jsonInto  string
+		yamlInto  string
+		assertOut func(*testing.T, string)
+	}{
+		{
+			name:   "json-into writes file",
+			output: "text",
+			jsonInto: filepath.Join(
+				t.TempDir(),
+				"out.json",
+			),
+			assertOut: func(t *testing.T, path string) {
+				data, err := os.ReadFile(path)
+				require.NoError(t, err)
+
+				var got []map[string]interface{}
+				require.NoError(t, json.Unmarshal(data, &got))
+				require.Len(t, got, 2)
+				assert.Equal(t, "alpha", got[0]["name"])
+				assert.Equal(t, "beta", got[1]["name"])
+			},
+		},
+		{
+			name:   "yaml-into writes file",
+			output: "text",
+			yamlInto: filepath.Join(
+				t.TempDir(),
+				"out.yaml",
+			),
+			assertOut: func(t *testing.T, path string) {
+				data, err := os.ReadFile(path)
+				require.NoError(t, err)
+
+				var got []map[string]interface{}
+				require.NoError(t, yaml.Unmarshal(data, &got))
+				require.Len(t, got, 2)
+				assert.Equal(t, "alpha", got[0]["name"])
+				assert.Equal(t, "beta", got[1]["name"])
+			},
+		},
+		{
+			name:   "json-into write failure does not create file",
+			output: "text",
+			jsonInto: filepath.Join(
+				t.TempDir(),
+				"missing",
+				"out.json",
+			),
+			assertOut: func(t *testing.T, path string) {
+				_, err := os.Stat(path)
+				require.Error(t, err)
+				assert.True(t, os.IsNotExist(err))
+			},
+		},
+		{
+			name:   "yaml-into write failure does not create file",
+			output: "text",
+			yamlInto: filepath.Join(
+				t.TempDir(),
+				"missing",
+				"out.yaml",
+			),
+			assertOut: func(t *testing.T, path string) {
+				_, err := os.Stat(path)
+				require.Error(t, err)
+				assert.True(t, os.IsNotExist(err))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw := bytes.NewBufferString(`[{"name":"beta"},{"name":"alpha"}]`)
+
+			attrList := attrs.AttrList{
+				{
+					Key:       "name",
+					OutputKey: "name",
+					Include:   true,
+				},
+			}
+
+			cmd := &cli.Command{
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "output", Value: tt.output},
+					&cli.StringFlag{Name: "sort", Value: "name"},
+					&cli.StringFlag{Name: "json-into", Value: tt.jsonInto},
+					&cli.StringFlag{Name: "yaml-into", Value: tt.yamlInto},
+				},
+				Metadata: map[string]interface{}{},
+			}
+
+			SliceDiceSpit(*raw, attrList, cmd, "", new(bytes.Buffer), nil)
+
+			path := tt.jsonInto
+			if path == "" {
+				path = tt.yamlInto
+			}
+
+			tt.assertOut(t, path)
+		})
 	}
 }

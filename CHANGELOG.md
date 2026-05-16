@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 
 - Both flags support special files such as `/dev/stdout` and named pipes. Named pipes are not supported on Windows.
 
+### Fixed
+
+- Time transformations now reliably use the system local timezone.
+
 ---
 
 [opentofu-1.12.0]: https://opentofu.org/blog/opentofu-1-12-0/#simultaneous-human-readable-and-machine-readable-output

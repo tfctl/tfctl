@@ -54,6 +54,10 @@ func NewGlobalFlags(params ...string) []cli.Flag {
 			Aliases: []string{"f"},
 			Usage:   "comma-separated list of filters to apply to results",
 		},
+		&cli.StringFlag{
+			Name:  "json-into",
+			Usage: "secondary output path to write JSON output to",
+		},
 		&cli.BoolFlag{
 			Name:    "local",
 			Aliases: []string{"no-local"},
@@ -84,6 +88,10 @@ func NewGlobalFlags(params ...string) []cli.Flag {
 			Aliases: []string{"no-titles"},
 			Usage:   "show titles with text output (--titles=0 to disable preset)",
 			Value:   false,
+		},
+		&cli.StringFlag{
+			Name:  "yaml-into",
+			Usage: "secondary output path to write YAML output to",
 		},
 	}
 

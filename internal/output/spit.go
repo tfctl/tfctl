@@ -117,6 +117,30 @@ func SliceDiceSpit(raw bytes.Buffer,
 	output := cmd.String("output")
 	if output == "raw" {
 		_, _ = w.Write(raw.Bytes())
+
+		// Check for --json-into and --yaml-into flags and include the appropriate
+		// output specifically for raw. Though this is somewhat duplicative of the
+		// processing below, it saves us the mess of having to marshall the raw
+		// output into JSON so that we can fall through and use the same, common
+		// logic.
+		if path2 := cmd.String("json-into"); path2 != "" {
+			if err := os.WriteFile(path2, raw.Bytes(), 0600); err != nil {
+				log.Errorf("SliceDiceSpit write file for json-into: %v", err)
+			}
+		}
+
+		if path2 := cmd.String("yaml-into"); path2 != "" {
+			yamlBytes, err := yaml.Marshal(gjson.Parse(raw.String()).Value())
+			if err != nil {
+				log.Errorf("SliceDiceSpit yaml marshal for yaml-into: %v", err)
+				return
+			}
+
+			if err := os.WriteFile(path2, yamlBytes, 0600); err != nil {
+				log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
+			}
+		}
+
 		return
 	}
 
@@ -191,6 +215,30 @@ func SliceDiceSpit(raw bytes.Buffer,
 		}
 
 		TableWriter(filteredDataset, attrs, cmd, w)
+	}
+
+	if path2 := cmd.String("json-into"); path2 != "" {
+		jsonOutput, err := json.Marshal(filteredDataset)
+		if err != nil {
+			log.Errorf("SliceDiceSpit json marshal for json-into: %v", err)
+			return
+		}
+
+		if err := os.WriteFile(path2, jsonOutput, 0600); err != nil {
+			log.Errorf("SliceDiceSpit write file for json-into: %v", err)
+		}
+	}
+
+	if path2 := cmd.String("yaml-into"); path2 != "" {
+		yamlOutput, err := yaml.Marshal(filteredDataset)
+		if err != nil {
+			log.Errorf("SliceDiceSpit yaml marshal for yaml-into: %v", err)
+			return
+		}
+
+		if err := os.WriteFile(path2, yamlOutput, 0600); err != nil {
+			log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
+		}
 	}
 }
 
