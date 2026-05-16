@@ -16,11 +16,11 @@ fi
 # Get the first non-empty line (subject)
 SUBJECT="$(sed -n '/./{p;q;}' "$MSG_FILE")"
 
-PATTERN='^(bug|chore|docs|feat|tooling|revert): [[:graph:]].+'
+PATTERN='^(bug|chore|docs|feat|revert|tooling): [[:graph:]].+'
 
 if ! printf '%s\n' "$SUBJECT" | grep -Eq "$PATTERN"; then
   echo >&2 "ERROR: Invalid commit message."
-  echo >&2 "Your commit message must start with one of: bug, chore, docs, feat, tooling, revert"
+  echo >&2 "Your commit message must start with one of: bug, chore, docs, feat, revert, tooling"
 
   echo >&2 "Format: <type>: <short description>"
   echo >&2 "Example: feat: add CSV export for user reports"
