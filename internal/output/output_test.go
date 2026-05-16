@@ -733,6 +733,7 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 	tests := []struct {
 		name      string
 		output    string
+		rawInput  string
 		jsonInto  string
 		yamlInto  string
 		assertOut func(*testing.T, string)
@@ -774,6 +775,50 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 			},
 		},
 		{
+			name:   "raw with json-into writes object document",
+			output: "raw",
+			rawInput: `{"data":{"id":"one","kind":"widget"}}`,
+			jsonInto: filepath.Join(
+				t.TempDir(),
+				"out.json",
+			),
+			assertOut: func(t *testing.T, path string) {
+				data, err := os.ReadFile(path)
+				require.NoError(t, err)
+
+				var got map[string]interface{}
+				require.NoError(t, json.Unmarshal(data, &got))
+				require.Contains(t, got, "data")
+
+				payload, ok := got["data"].(map[string]interface{})
+				require.True(t, ok)
+				assert.Equal(t, "one", payload["id"])
+				assert.Equal(t, "widget", payload["kind"])
+			},
+		},
+		{
+			name:   "raw with yaml-into writes object document",
+			output: "raw",
+			rawInput: `{"data":{"id":"one","kind":"widget"}}`,
+			yamlInto: filepath.Join(
+				t.TempDir(),
+				"out.yaml",
+			),
+			assertOut: func(t *testing.T, path string) {
+				data, err := os.ReadFile(path)
+				require.NoError(t, err)
+
+				var got map[string]interface{}
+				require.NoError(t, yaml.Unmarshal(data, &got))
+				require.Contains(t, got, "data")
+
+				payload, ok := got["data"].(map[interface{}]interface{})
+				require.True(t, ok)
+				assert.Equal(t, "one", payload["id"])
+				assert.Equal(t, "widget", payload["kind"])
+			},
+		},
+		{
 			name:   "json-into write failure does not create file",
 			output: "text",
 			jsonInto: filepath.Join(
@@ -805,7 +850,12 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			raw := bytes.NewBufferString(`[{"name":"beta"},{"name":"alpha"}]`)
+			rawInput := tt.rawInput
+			if rawInput == "" {
+				rawInput = `[{"name":"beta"},{"name":"alpha"}]`
+			}
+
+			raw := bytes.NewBufferString(rawInput)
 
 			attrList := attrs.AttrList{
 				{

@@ -118,28 +118,17 @@ func SliceDiceSpit(raw bytes.Buffer,
 	if output == "raw" {
 		_, _ = w.Write(raw.Bytes())
 
-		// Check for --json-into and --yaml-into flags and include the appropriate
-		// output specifically for raw. Though this is somewhat duplicative of the
-		// processing below, it saves us the mess of having to marshall the raw
-		// output into JSON so that we can fall through and use the same, common
-		// logic.
-		if path2 := cmd.String("json-into"); path2 != "" {
-			if err := os.WriteFile(path2, raw.Bytes(), 0600); err != nil {
-				log.Errorf("SliceDiceSpit write file for json-into: %v", err)
-			}
+		if cmd.String("json-into") == "" && cmd.String("yaml-into") == "" {
+			return
 		}
 
-		if path2 := cmd.String("yaml-into"); path2 != "" {
-			yamlBytes, err := yaml.Marshal(gjson.Parse(raw.String()).Value())
-			if err != nil {
-				log.Errorf("SliceDiceSpit yaml marshal for yaml-into: %v", err)
-				return
-			}
-
-			if err := os.WriteFile(path2, yamlBytes, 0600); err != nil {
-				log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
-			}
+		var rawDoc interface{}
+		if err := json.Unmarshal(raw.Bytes(), &rawDoc); err != nil {
+			log.Errorf("SliceDiceSpit json unmarshal for raw into output: %v", err)
+			return
 		}
+
+		writeIntoFiles(cmd, rawDoc)
 
 		return
 	}
@@ -217,29 +206,7 @@ func SliceDiceSpit(raw bytes.Buffer,
 		TableWriter(filteredDataset, attrs, cmd, w)
 	}
 
-	if path2 := cmd.String("json-into"); path2 != "" {
-		jsonOutput, err := json.Marshal(filteredDataset)
-		if err != nil {
-			log.Errorf("SliceDiceSpit json marshal for json-into: %v", err)
-			return
-		}
-
-		if err := os.WriteFile(path2, jsonOutput, 0600); err != nil {
-			log.Errorf("SliceDiceSpit write file for json-into: %v", err)
-		}
-	}
-
-	if path2 := cmd.String("yaml-into"); path2 != "" {
-		yamlOutput, err := yaml.Marshal(filteredDataset)
-		if err != nil {
-			log.Errorf("SliceDiceSpit yaml marshal for yaml-into: %v", err)
-			return
-		}
-
-		if err := os.WriteFile(path2, yamlOutput, 0600); err != nil {
-			log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
-		}
-	}
+	writeIntoFiles(cmd, filteredDataset)
 }
 
 // TableWriter renders the result set in a tabular form honoring color,
@@ -442,4 +409,34 @@ func getCommonFields(resource gjson.Result) map[string]interface{} {
 		}
 	}
 	return common
+}
+
+// WriteIntoFiles writes the provided data into files specified by the
+// --json-into and --yaml-into flags, if present. There is no check to know if
+// the output file can be succesfully written or if it already exists. In the
+// latter case, the file will be overwritten.
+func writeIntoFiles(cmd *cli.Command, data interface{}) {
+	if path2 := cmd.String("json-into"); path2 != "" {
+		jsonOutput, err := json.Marshal(data)
+		if err != nil {
+			log.Errorf("SliceDiceSpit json marshal for json-into: %v", err)
+			return
+		}
+
+		if err := os.WriteFile(path2, jsonOutput, 0600); err != nil {
+			log.Errorf("SliceDiceSpit write file for json-into: %v", err)
+		}
+	}
+
+	if path2 := cmd.String("yaml-into"); path2 != "" {
+		yamlOutput, err := yaml.Marshal(data)
+		if err != nil {
+			log.Errorf("SliceDiceSpit yaml marshal for yaml-into: %v", err)
+			return
+		}
+
+		if err := os.WriteFile(path2, yamlOutput, 0600); err != nil {
+			log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
+		}
+	}
 }
