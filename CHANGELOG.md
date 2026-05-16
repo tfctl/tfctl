@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.2.1 - 2026-05-16
+
+### Added
+
+- Simplified `--json-into` and `--yaml-into` logic.
+
+- Consistent pre-commit message.
+
 ## v1.2.0 - 2026-05-16
 
 ### Added
