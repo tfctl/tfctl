@@ -1,6 +1,10 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [Unreleased]
+
+### Added
+
+- Release blocked if Change Log not updated.
 
 ## v1.2.1 - 2026-05-16
 
