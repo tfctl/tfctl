@@ -23,9 +23,11 @@ Query Terraform state files.
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
 | --help |  | Show command help. |
 | --host/-h string | app.terraform.io | HCP/TFE host to use. Overrides the backend. |
+| --json-into string |  | secondary output path to write JSON output to. |
 | --local/--no-local |  | Show timestamps in local time according to your OS. |
 | --org string |  | Organization to use for all commands. Overrides the backend. |
 | --output/-o string |  | Output format (text (default), json, yaml, csv). [More info](#output)|
+| --padding int | 1 | Number of spaces to pad columns in text output. |
 | --passphrase string |  | OpenTofu encrypted state passphrase. |
 | --short/--no-short | false | Shorten full resource name paths. |
 | --sort/-s string |  | Comma-separated list of fields to sort by. [More info](#sort)|
@@ -33,6 +35,7 @@ Query Terraform state files.
 | --titles/--no-titles |  | Include column headings in text output. |
 | --tldr |  | Show tldr page if a client is installed. |
 | --workspace/-w string | default | Workspace to use for all commands. Overrides the backend. |
+| --yaml-into string |  | secondary output path to write YAML output to. |
 
 
 

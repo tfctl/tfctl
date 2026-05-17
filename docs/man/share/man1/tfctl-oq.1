@@ -1,4 +1,4 @@
-.TH tfctl-oq 1 "February 5, 2026" "tfctl 1.0.0" "tfctl"
+.TH tfctl-oq 1 "May 17, 2026" "tfctl v9.8.7" "tfctl"
 .SH NAME
 tfctl\-oq \- HCP/TFE Organization Query
 .SH SYNOPSIS
@@ -40,6 +40,11 @@ HCP/TFE host to use. Overrides the backend.
 
 
 .TP
+\fB--json-into string\fR
+secondary output path to write JSON output to.
+
+
+.TP
 \fB--limit int\fR
 Limit the result set to `int` results.
 
@@ -56,6 +61,11 @@ Output format (text (default), json, yaml, csv).
 .fi
 The `text` output format is a human-friendly table format. The `json`, `yaml`, and `csv` formats are machine-friendly and can be used for further processing.
 .nf
+
+
+.TP
+\fB--padding int\fR
+Number of spaces to pad columns in text output.
 
 
 .TP
@@ -80,6 +90,11 @@ Include column headings in text output.
 .TP
 \fB--tldr\fR
 Show tldr page if a client is installed.
+
+
+.TP
+\fB--yaml-into string\fR
+secondary output path to write YAML output to.
 
 
 

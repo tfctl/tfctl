@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
+## v1.2.2 = 2026-05-17
+
 ### Added
 
-- Release blocked if Change Log not updated.
+- Release blocked if CHANGELOG.md not updated.
+- Refresh docs and man pages and added docs generation to release workflow.
 
 ## v1.2.1 - 2026-05-16
 
