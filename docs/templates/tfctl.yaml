@@ -38,6 +38,37 @@ anchors:
     description: Workspace to use for all commands. Overrides the backend.
     default: default
 
+root:
+  name: tfctl
+  short: Terraform Control
+  usage: tfctl [global options] [command [command options]]
+  commands:
+    - names: mq
+      description: module registry query
+    - names: oq
+      description: organization query
+    - names: pq
+      description: project query
+    - names: ps
+      description: plan summary
+    - names: rq
+      description: run query
+    - names: sq
+      description: state query
+    - names: svq
+      description: state version query
+    - names: wq
+      description: workspace query
+    - names: help, h
+      description: Shows a list of commands or help for one command
+  global_flags:
+    - id: version
+      syntax: --version, -v
+      description: tfctl version info
+    - id: help
+      syntax: --help, -h
+      description: show help
+
 subcommands:
   - id: mq
     short: HCP/TFE Module Query

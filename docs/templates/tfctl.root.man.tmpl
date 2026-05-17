@@ -1,0 +1,22 @@
+.TH tfctl 1 "{{.Date}}" "tfctl {{.Version}}" "tfctl"
+.SH NAME
+tfctl \- {{.Short}}
+.SH USAGE
+{{.Usage}}
+.SH COMMANDS
+{{range .Commands}}
+.TP
+\fB{{.Names}}\fR
+{{.Description}}
+{{end}}
+.SH GLOBAL OPTIONS
+{{range .GlobalFlags}}
+.TP
+\fB{{.Syntax}}\fR
+{{.Description}}
+{{if .More}}
+.fi
+{{.More}}
+.nf
+{{end}}
+{{end}}

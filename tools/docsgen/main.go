@@ -13,12 +13,21 @@ import (
 )
 
 type Config struct {
+	Root        Root         `yaml:"root"`
 	Subcommands []Subcommand `yaml:"subcommands"`
 	Common      Common       `yaml:"common"`
 }
 
 type Common struct {
 	Flags []Flag `yaml:"flags"`
+}
+
+type Root struct {
+	Name        string        `yaml:"name"`
+	Short       string        `yaml:"short"`
+	Usage       string        `yaml:"usage"`
+	Commands    []RootCommand `yaml:"commands"`
+	GlobalFlags []Flag        `yaml:"global_flags"`
 }
 
 type Subcommand struct {
@@ -44,11 +53,22 @@ type Example struct {
 	Description string `yaml:"description"`
 }
 
+type RootCommand struct {
+	Names       string `yaml:"names"`
+	Description string `yaml:"description"`
+}
+
 type TemplateData struct {
 	Subcommand
 	Date    string
 	Version string
 	IDUpper string
+}
+
+type RootTemplateData struct {
+	Root
+	Date    string
+	Version string
 }
 
 type Outputs struct {
@@ -59,12 +79,29 @@ type Outputs struct {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		panic("usage: docsgen <docs-dir> [version]")
+	}
 
 	docs := os.Args[1]
+	version := getVersion()
+	if len(os.Args) > 2 && os.Args[2] != "" {
+		version = os.Args[2]
+	}
 
 	data, _ := os.ReadFile(docs + "/templates/tfctl.yaml")
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
+		panic(err)
+	}
+
+	date := time.Now().Format("January 2, 2006")
+
+	if err := renderOutput(
+		Outputs{Template: docs + "/templates/tfctl.root.man.tmpl", Folder: docs + "/./man/share/man1/", Prefix: "", Suffix: ".1"},
+		config.Root.Name,
+		RootTemplateData{Root: config.Root, Date: date, Version: version},
+	); err != nil {
 		panic(err)
 	}
 
@@ -83,8 +120,8 @@ func main() {
 		// Prepare template data
 		metadata := TemplateData{
 			Subcommand: sub,
-			Date:       time.Now().Format("January 2, 2006"),
-			Version:    getVersion(),
+			Date:       date,
+			Version:    version,
 		}
 
 		types := []Outputs{
@@ -94,24 +131,36 @@ func main() {
 		}
 
 		for _, t := range types {
-			if err := os.MkdirAll(t.Folder, 0755); err != nil {
+			if err := renderOutput(t, sub.ID, metadata); err != nil {
 				panic(err)
 			}
-
-			file, _ := os.Create(t.Folder + t.Prefix + sub.ID + t.Suffix)
-			fmt.Println("Generating", t.Folder+t.Prefix+sub.ID+t.Suffix)
-			tmpl, err := template.ParseFiles(t.Template)
-			if err != nil {
-				panic(err)
-			}
-
-			if err := tmpl.Execute(file, metadata); err != nil {
-				panic(err)
-			}
-
-			file.Close()
 		}
 	}
+}
+
+func renderOutput(output Outputs, name string, metadata any) error {
+	if err := os.MkdirAll(output.Folder, 0755); err != nil {
+		return err
+	}
+
+	path := output.Folder + output.Prefix + name + output.Suffix
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	fmt.Println("Generating", path)
+	tmpl, err := template.ParseFiles(output.Template)
+	if err != nil {
+		return err
+	}
+
+	if err := tmpl.Execute(file, metadata); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // getVersion returns the version string from git tags, stripping the leading
