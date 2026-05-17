@@ -205,6 +205,9 @@ common:
     - id: help
       syntax: --help
       description: Show command help.
+    - id: json-into
+      syntax: --json-into string
+      description: secondary output path to write JSON output to.
     - id: local
       syntax: --local/--no-local
       description: Show timestamps in local time according to your OS.
@@ -214,6 +217,10 @@ common:
       more: >-
         The `text` output format is a human-friendly table format. The `json`, `yaml`,
         and `csv` formats are machine-friendly and can be used for further processing.
+    - id: padding
+      syntax: --padding int
+      description: Number of spaces to pad columns in text output.
+      default: 1
     - id: sort
       syntax: --sort/-s string
       description: Comma-separated list of fields to sort by.
@@ -226,3 +233,6 @@ common:
     - id: tldr
       syntax: --tldr
       description: Show tldr page if a client is installed.
+    - id: yaml-into
+      syntax: --yaml-into string
+      description: secondary output path to write YAML output to.

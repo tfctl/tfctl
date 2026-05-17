@@ -16,12 +16,12 @@ Notes:
 
 ## Debian/Ubuntu (.deb package)
 
-Download the .deb from the latest release and install:
+Download the latest .deb release packages for your platform from the [releases page](https://github.com/tfctl/tfctl/releases).
 
 ```bash
-# Example for amd64; adjust the filename for your architecture
-curl -LO https://github.com/tfctl/tfctl/releases/latest/download/tfctl_amd64.deb \
-  && sudo dpkg -i tfctl_amd64.deb || sudo apt-get -f install
+# Example for amd64; adjust the filename for the architecture and release you
+# downloaded.
+sudo dpkg -i /path/to/tfctl_1.2.1_amd64.deb
 ```
 
 Notes:
