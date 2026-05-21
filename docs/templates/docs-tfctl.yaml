@@ -60,9 +60,9 @@ root:
     - names: wq
       description: workspace query
   global_flags:
-    # - id: help
-    #   syntax: --help, -h
-    #   description: show help
+    - id: help
+      syntax: --help,
+      description: show tfctl command help
     - id: version
       syntax: --version, -v
       description: tfctl version info

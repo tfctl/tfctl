@@ -64,9 +64,16 @@ func InitApp(ctx context.Context, args []string) (*cli.Command, error) {
 	}
 
 	app := &cli.Command{
-		Name:  "tfctl",
-		Usage: "Terraform Control",
+		Name:            "tfctl",
+		Usage:           "Terraform Control",
+		HideHelp:        true,
+		HideHelpCommand: true,
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "help",
+				Usage:       "show tfctl command help",
+				HideDefault: true,
+			},
 			&cli.BoolFlag{
 				Name:        "version",
 				Aliases:     []string{"v"},
