@@ -59,15 +59,13 @@ root:
       description: state version query
     - names: wq
       description: workspace query
-    - names: help, h
-      description: Shows a list of commands or help for one command
   global_flags:
+    # - id: help
+    #   syntax: --help, -h
+    #   description: show help
     - id: version
       syntax: --version, -v
       description: tfctl version info
-    - id: help
-      syntax: --help, -h
-      description: show help
 
 subcommands:
   - id: mq
@@ -233,9 +231,6 @@ common:
     - id: filter
       syntax: --filter/-f string
       description: Comma-separated list of filters to apply to results
-    - id: help
-      syntax: --help
-      description: Show command help.
     - id: json-into
       syntax: --json-into string
       description: secondary output path to write JSON output to.

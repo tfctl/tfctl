@@ -89,7 +89,7 @@ func main() {
 		version = os.Args[2]
 	}
 
-	data, _ := os.ReadFile(docs + "/templates/tfctl.yaml")
+	data, _ := os.ReadFile(docs + "/templates/docs-tfctl.yaml")
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		panic(err)
