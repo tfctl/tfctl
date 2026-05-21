@@ -34,7 +34,7 @@
 [0.00, "o", "\r\n"]
 
 [3.00, "o", "\u001b[38;5;220m"]
-[0.00, "o", "# Here's an S3 backend query.  Notice the command syntax is dfferent,\r\n"]
+[0.00, "o", "# Here's an S3 backend query.  Notice the command syntax is different,\r\n"]
 [0.00, "o", "# and we're simply referencing an IAC root folder that is an S3 backend.\r\n"]
 [0.00, "o", "# The id shown is the S3 object version id...\r\n"]
 [0.00, "o", "\u001b[38;5;33m~/iac> \u001b[0m"]
@@ -99,8 +99,6 @@
 [0.00, "o", "terraform.tfstate        35 2025-11-08T11:01:15Z\r\n"]
 [0.00, "o", "terraform.tfstate.backup 30 2025-11-08T11:01:14Z\r\n"]
 [0.00, "o", "\r\n"]
-
-
 
 [3.00, "o", "\u001b[38;5;220m\r\n"]
 [0.00, "o", "    _      __          _     _ \r\n   | |_   / _|   ___  | |_  | |\r\n   | __| | |_   / __| | __| | |\r\n   | |_  |  _| | (__  | |_  | |\r\n    \\__| |_|    \\___|  \\__| |_|\r\n                               \r\n"]
