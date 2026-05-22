@@ -19,15 +19,24 @@
 
 **Fast Performance** - Built-in Go with concurrent operations and intelligent caching.
 
-**Flexible Output** - Filter, sort, and transform results as JSON, YAML, or formatted tables.
+**Flexible Output** - Filter, sort, and transform results as JSON, YAML, or formatted tables. Use that output to drive automation workflows.
 
 **Secure** - Supports OpenTofu encrypted state files and multiple authentication methods.
 
 **Comprehensive** - Query any attribute available through the Terraform APIs.
 
+### Demos
+
 <a href="docs/asciinema/sq.gif" target="_blank" rel="noopener noreferrer">
 <img src="docs/asciinema/sq.gif" alt="sq demo" style="width:80%;height:auto;" />
 </a>
+
+<a href="docs/asciinema/common.gif" target="_blank" rel="noopener noreferrer">Common command options</a>
+
+<a href="docs/asciinema/svq.gif" target="_blank" rel="noopener noreferrer">State Version Query (svq)</a>
+
+<a href="docs/asciinema/wq.gif" target="_blank" rel="noopener noreferrer">Workspace Query (svq)</a>
+
 
 ## Why tfctl?
 
