@@ -115,9 +115,9 @@ func TestInterfaceToString(t *testing.T) {
 			want:  "true",
 		},
 		{
-			name:  "bool false is zero value",
+			name:  "bool false",
 			value: false,
-			want:  "",
+			want:  "false",
 		},
 		{
 			name:  "nil default",
@@ -143,13 +143,13 @@ func TestInterfaceToString(t *testing.T) {
 		{
 			name:  "zero value int",
 			value: 0,
-			want:  "",
+			want:  "0",
 		},
 		{
-			name:     "zero value with custom empty",
+			name:     "zero value with custom empty remains numeric",
 			value:    0,
 			emptyVal: "N/A",
-			want:     "N/A",
+			want:     "0",
 		},
 	}
 

@@ -33,14 +33,29 @@ func InterfaceToString(value interface{}, emptyValue ...string) string {
 		emptyValue = []string{""}
 	}
 
-	if value == nil || reflect.ValueOf(value).IsZero() {
+	if value == nil {
 		return emptyValue[0]
+	}
+
+	rv := reflect.ValueOf(value)
+	switch rv.Kind() {
+	case reflect.Interface, reflect.Pointer:
+		if rv.IsNil() {
+			return emptyValue[0]
+		}
+	case reflect.Map, reflect.Slice:
+		if rv.Len() == 0 {
+			return emptyValue[0]
+		}
 	}
 
 	// We note that the int and bool cases are unlikely to be reached due to JSON
 	// parsing behavior.
 	switch value := value.(type) {
 	case string:
+		if value == "" {
+			return emptyValue[0]
+		}
 		return value
 	case int:
 		return strconv.Itoa(value)
