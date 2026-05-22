@@ -6,6 +6,7 @@ package s3
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,8 +17,10 @@ import (
 
 	"github.com/apex/log"
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
+	awsv2http "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"github.com/hashicorp/go-tfe"
 	"github.com/urfave/cli/v3"
 
@@ -143,13 +146,14 @@ func (be *BackendS3) StateBody(svID string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 	svc := awsx.NewS3(cfg)
-	input := &s3v2.GetObjectInput{
-		Bucket:    awsv2.String(be.Backend.Config.Bucket),
-		Key:       awsv2.String(key),
-		VersionId: awsv2.String(svID),
-	}
 
-	result, err := svc.GetObject(be.Ctx, input)
+	result, err := getObjectWithVersionFallback(
+		be.Ctx,
+		svc,
+		be.Backend.Config.Bucket,
+		key,
+		awsv2.String(svID),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get S3 object: %w", err)
 	}
@@ -232,13 +236,33 @@ func (be *BackendS3) StateVersions(augmenter ...func(context.Context, *cli.Comma
 			continue
 		}
 
-		obj, err := svc.GetObject(be.Ctx, &s3v2.GetObjectInput{
-			Bucket:    awsv2.String(be.Backend.Config.Bucket),
-			Key:       awsv2.String(prefix),
-			VersionId: v.VersionId,
-		})
+		versionID := "<nil>"
+		if v.VersionId != nil {
+			versionID = *v.VersionId
+		}
+
+		listedKey := "<nil>"
+		if v.Key != nil {
+			listedKey = *v.Key
+		}
+
+		log.Debugf(
+			"s3 get object req: Bucket=%q prefix=%q versionID=%q listedKey=%q",
+			be.Backend.Config.Bucket,
+			prefix,
+			versionID,
+			listedKey,
+		)
+
+		obj, err := getObjectWithVersionFallback(
+			be.Ctx,
+			svc,
+			be.Backend.Config.Bucket,
+			prefix,
+			v.VersionId,
+		)
 		if err != nil {
-			log.WithError(err).Error("s3 get object failed")
+			logS3GetObjectError(err)
 			continue
 		}
 
@@ -341,4 +365,108 @@ func (be *BackendS3) String() string {
 
 func (be *BackendS3) Type() (string, error) {
 	return be.Backend.Type, nil
+}
+
+// getObjectWithVersionFallback fetches an S3 object using the provided version
+// ID if present. It retries once without a version ID when the original request
+// fails with an error that indicates the versioned request should be retried
+// against the latest object.
+func getObjectWithVersionFallback(ctx context.Context, svc *s3v2.Client, bucket string, key string, versionID *string) (*s3v2.GetObjectOutput, error) {
+	cleanVersionID := sanitizeVersionID(versionID)
+
+	// Note that path-style requests aren't supported. If path-style is used, this
+	// will fail to the fallback logic, which is arguably better than failing
+	// outright.
+	// TODO Log warning if path style in use. Perhaps skip this first attempt.
+	input := &s3v2.GetObjectInput{
+		Bucket: awsv2.String(bucket),
+		Key:    awsv2.String(key),
+	}
+	if cleanVersionID != nil {
+		input.VersionId = cleanVersionID
+	}
+
+	obj, err := svc.GetObject(ctx, input)
+	if err == nil {
+		return obj, nil
+	}
+
+	if cleanVersionID == nil || !shouldRetryWithoutVersion(err) {
+		return nil, err
+	}
+
+	log.WithError(err).WithFields(log.Fields{
+		"bucket":     bucket,
+		"key":        key,
+		"version_id": *cleanVersionID,
+	}).Debug("retrying s3 get object without version id")
+
+	fallbackInput := &s3v2.GetObjectInput{
+		Bucket: awsv2.String(bucket),
+		Key:    awsv2.String(key),
+	}
+
+	return svc.GetObject(ctx, fallbackInput)
+}
+
+func logS3GetObjectError(err error) {
+	entry := log.WithError(err)
+
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		entry = entry.WithFields(log.Fields{
+			"aws_error_code":    apiErr.ErrorCode(),
+			"aws_error_message": apiErr.ErrorMessage(),
+		})
+	}
+
+	var respErr *awsv2http.ResponseError
+	if errors.As(err, &respErr) {
+		statusCode := 0
+		if respErr.Response != nil {
+			statusCode = respErr.Response.StatusCode
+		}
+
+		entry = entry.WithFields(log.Fields{
+			"http_status_code": statusCode,
+			"request_id":       respErr.ServiceRequestID(),
+		})
+	}
+
+	entry.Error("s3 get object failed")
+}
+
+// sanitizeVersionID normalizes the version ID for use in GetObjectInput. It
+// treats nil, empty, and "null" (case-insensitive) version IDs as nil.
+func sanitizeVersionID(versionID *string) *string {
+	if versionID == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*versionID)
+	if trimmed == "" || strings.EqualFold(trimmed, "null") {
+		return nil
+	}
+
+	return versionID
+}
+
+// shouldRetryWithoutVersion determines if a GetObject error should trigger a
+// retry without the version ID because the error indicates the initial request
+// (with version) is invalid.
+func shouldRetryWithoutVersion(err error) bool {
+	// Bail out early if err is not an API error.
+	var apiErr smithy.APIError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+
+	code := strings.ToLower(strings.TrimSpace(apiErr.ErrorCode()))
+
+	switch code {
+	case "nosuchversion", "invalidargument", "invalidrequest":
+		return true
+	default:
+		return false
+	}
 }

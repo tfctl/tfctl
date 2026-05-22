@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
 
+	tfcfg "github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/log"
 )
 
@@ -59,7 +60,23 @@ func LoadAWSConfig(ctx context.Context, opts ...Option) (awsv2.Config, error) {
 // NewS3 constructs a v2 S3 client from the provided config. Additional service
 // options can be supplied via optFns.
 func NewS3(cfg awsv2.Config, optFns ...func(*s3v2.Options)) *s3v2.Client {
-	client := s3v2.NewFromConfig(cfg, optFns...)
+	moreOptFns := append(append([]func(*s3v2.Options){}, optFns...), func(o *s3v2.Options) {
+		// Side-effect of s3 implementations (localstack, ministack, minio, etc)
+		// that may not have full S3 support.
+		// https://github.com/aws/aws-sdk-go-v2/discussions/2960#discussioncomment-12077210
+		o.UsePathStyle, _ = tfcfg.GetBool("s3_backend.path_style", true)
+
+		v, _ := tfcfg.GetBool("s3_backend.checksum_calculation", true)
+		if v {
+			o.RequestChecksumCalculation = awsv2.RequestChecksumCalculationWhenRequired
+			o.ResponseChecksumValidation = awsv2.ResponseChecksumValidationWhenRequired
+		} else {
+			o.RequestChecksumCalculation = awsv2.RequestChecksumCalculationWhenSupported
+			o.ResponseChecksumValidation = awsv2.ResponseChecksumValidationWhenSupported
+		}
+	})
+
+	client := s3v2.NewFromConfig(cfg, moreOptFns...)
 	log.Debugf("s3 client created")
 	return client
 }
