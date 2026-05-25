@@ -185,6 +185,7 @@ func psCommandBuilder(meta meta.Meta) *cli.Command {
 
 	return &cli.Command{
 		Name:      "ps",
+		Aliases:   []string{"summarize"},
 		Usage:     "plan summary",
 		UsageText: "tfctl ps [plan-file]",
 		Metadata:  map[string]any{"meta": meta},

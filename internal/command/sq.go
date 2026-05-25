@@ -122,6 +122,7 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 func sqCommandBuilder(meta meta.Meta) *cli.Command {
 	return &cli.Command{
 		Name:      "sq",
+		Aliases:   []string{"state"},
 		Usage:     "state query",
 		UsageText: "tfctl sq [RootDir] [options]",
 		Metadata: map[string]any{

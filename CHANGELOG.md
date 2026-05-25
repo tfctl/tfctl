@@ -2,7 +2,19 @@
 
 ## [Unreleased]
 
-## v1.2.2 = 2026-05-17
+### Added
+
+- S3 backend now has richer support for more S3 implementations (MiniStack, Minio, etc).
+- `0` and `false` are no longer treated as missing values when presenting output.
+- Aliases added for query subcommands. For example, `org` is now an alias for `oq`. See `tfctl --help`.
+
+### Chores
+
+- Makefile release target now refreshes casts, if needed.
+- Minor docs tweaks. Docs template source file renamed to avoid confusion.
+
+
+## v1.2.2 - 2026-05-17
 
 ### Added
 

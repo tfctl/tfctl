@@ -90,20 +90,24 @@ tfctl mq --sort -downloads
 
 # Export workspace data for automation
 tfctl wq --attrs created-at,updated-at --output json
+
+# All "short-style" queries have aliases. Functionality is identical.
+tfctl mq --color
+tfctl module --color
 ```
 
 ## Available Commands
 
-| Command | Purpose | Example |
-|---------|---------|---------|
-| **`mq`** | Module query | `tfctl mq --filter 'name@aws'` |
-| **`oq`** | Organization query | `tfctl oq --attrs email` |
-| **`pq`** | Project query | `tfctl pq --sort created-at` |
-| **`ps`** | Plan summary | `terraform plan \| tfctl ps` |
-| **`rq`** | Run query | `tfctl rq --attrs status` |
-| **`sq`** | State query | `tfctl sq --attrs arn --sort arn` |
-| **`svq`** | State version query | `tfctl svq --limit 10` |
-| **`wq`** | Workspace query | `tfctl wq --filter 'status@applied'` |
+| Command | Alias | Purpose | Example |
+|---------| ----- | ------- |---------|
+| **`mq`** | `module` | Module query | `tfctl mq --filter 'name@aws'` |
+| **`oq`** | `org` | Organization query | `tfctl oq --attrs email` |
+| **`pq`** | `project` | Project query | `tfctl pq --sort created-at` |
+| **`ps`** | `summarize` | Plan summary | `terraform plan \| tfctl ps` |
+| **`rq`** | `run` |Run query | `tfctl rq --attrs status` |
+| **`sq`** | `state` | State query | `tfctl sq --attrs arn --sort arn` |
+| **`svq`** | `state-version` | State version query | `tfctl svq --limit 10` |
+| **`wq`** | `workspace` | Workspace query | `tfctl wq --filter 'status@applied'` |
 
 ## Documentation
 

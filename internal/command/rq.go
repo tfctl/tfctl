@@ -76,6 +76,7 @@ func rqServerSideFilterAugmenter(
 func rqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:      "rq",
+		Alias:     "run",
 		Usage:     "run query",
 		UsageText: "tfctl rq [RootDir] [options]",
 		Flags: []cli.Flag{

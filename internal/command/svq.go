@@ -65,6 +65,7 @@ func SvqServerSideFilterAugmenter(
 func svqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:      "svq",
+		Alias:     "state-version",
 		Usage:     "state version query",
 		UsageText: "tfctl svq [RootDir] [options]",
 		Flags: []cli.Flag{

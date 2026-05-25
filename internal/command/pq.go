@@ -116,6 +116,7 @@ func pqServerSideFilterAugmenter(
 func pqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:  "pq",
+		Alias: "project",
 		Usage: "project query",
 		Flags: []cli.Flag{
 			NewHostFlag("pq", meta.Config.Source),

@@ -107,6 +107,7 @@ func wqServerSideFilterAugmenter(
 func wqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:      "wq",
+		Alias:     "workspace",
 		Usage:     "workspace query",
 		UsageText: "tfctl wq [RootDir] [options]",
 		Flags: []cli.Flag{

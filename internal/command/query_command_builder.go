@@ -18,6 +18,7 @@ import (
 // adds tldr/schema flags, applies global flags, and sets up validators.
 type QueryCommandBuilder struct {
 	Name      string
+	Alias     string
 	Usage     string
 	UsageText string
 	Flags     []cli.Flag
@@ -29,6 +30,7 @@ type QueryCommandBuilder struct {
 func (qcb *QueryCommandBuilder) Build() *cli.Command {
 	return &cli.Command{
 		Name:      qcb.Name,
+		Aliases:   []string{qcb.Alias},
 		Usage:     qcb.Usage,
 		UsageText: qcb.UsageText,
 		Metadata: map[string]any{

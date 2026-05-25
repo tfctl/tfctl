@@ -105,6 +105,7 @@ func mqServerSideFilterAugmenter(
 func mqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:      "mq",
+		Alias:     "module",
 		Usage:     "module registry query",
 		UsageText: "tfctl mq [RootDir] [options]",
 		Flags: []cli.Flag{

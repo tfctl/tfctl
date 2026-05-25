@@ -93,6 +93,7 @@ func oqServerSideFilterAugmenter(
 func oqCommandBuilder(meta meta.Meta) *cli.Command {
 	return (&QueryCommandBuilder{
 		Name:      "oq",
+		Alias:     "org",
 		Usage:     "organization query",
 		UsageText: "tfctl oq [RootDir] [options]",
 		Flags: []cli.Flag{
