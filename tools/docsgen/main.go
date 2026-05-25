@@ -32,6 +32,7 @@ type Root struct {
 
 type Subcommand struct {
 	ID          string    `yaml:"id"`
+	Alias       string    `yaml:"alias,omitempty"`
 	Short       string    `yaml:"short"`
 	Description string    `yaml:"description"`
 	Usage       string    `yaml:"usage"`
@@ -55,14 +56,16 @@ type Example struct {
 
 type RootCommand struct {
 	Names       string `yaml:"names"`
+	Alias       string `yaml:"alias,omitempty"`
 	Description string `yaml:"description"`
 }
 
 type TemplateData struct {
 	Subcommand
-	Date    string
-	Version string
-	IDUpper string
+	Date       string
+	Version    string
+	IDUpper    string
+	UsageAlias string
 }
 
 type RootTemplateData struct {
@@ -122,6 +125,7 @@ func main() {
 			Subcommand: sub,
 			Date:       date,
 			Version:    version,
+			UsageAlias: usageWithAlias(sub.Usage, sub.ID, sub.Alias),
 		}
 
 		types := []Outputs{
@@ -173,4 +177,22 @@ func getVersion() string {
 
 	version := strings.TrimSpace(string(out))
 	return strings.TrimPrefix(version, "v")
+}
+
+// usageWithAlias rewrites the first "tfctl <id>" segment in a usage string to
+// "tfctl <alias>". It returns an empty string when alias is blank or when the
+// usage string does not contain the required format.
+func usageWithAlias(usage string, id string, alias string) string {
+	if alias == "" {
+		return ""
+	}
+
+	short := "tfctl " + id
+	aliased := "tfctl " + alias
+
+	if !strings.Contains(usage, short) {
+		return ""
+	}
+
+	return strings.Replace(usage, short, aliased, 1)
 }

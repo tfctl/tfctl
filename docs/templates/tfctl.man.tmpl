@@ -2,7 +2,9 @@
 .SH NAME
 tfctl\-{{.ID}} \- {{.Short}}
 .SH SYNOPSIS
-{{.Usage}}
+{{.Usage}}{{if .UsageAlias}}
+.br
+{{.UsageAlias}}{{end}}
 .SH DESCRIPTION
 {{.Description}}
 {{if .Flags}}

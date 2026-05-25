@@ -1,7 +1,8 @@
 # tfctl-{{.ID}}
 
 > {{.Description}}
-{{if .Examples}}{{range .Examples}}
+{{if .Alias}}> Also available as: `tfctl {{.Alias}}`
+{{end}}{{if .Examples}}{{range .Examples}}
 - {{.Description}}
 
 `{{.Command}}`

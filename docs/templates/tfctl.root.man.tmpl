@@ -6,7 +6,7 @@ tfctl \- {{.Short}}
 .SH COMMANDS
 {{range .Commands}}
 .TP
-\fB{{.Names}}\fR
+\fB{{.Names}}{{if .Alias}} | {{.Alias}}{{end}}\fR
 {{.Description}}
 {{end}}
 .SH GLOBAL OPTIONS

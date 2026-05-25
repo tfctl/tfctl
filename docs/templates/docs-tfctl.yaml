@@ -47,18 +47,25 @@ root:
       alias: module
       description: module registry query
     - names: oq
+      alias: org
       description: organization query
     - names: pq
+      alias: project
       description: project query
     - names: ps
+      alias: summarize
       description: plan summary
     - names: rq
+      alias: run
       description: run query
     - names: sq
+      alias: state
       description: state query
     - names: svq
+      alias: state-version
       description: state version query
     - names: wq
+      alias: workspace
       description: workspace query
   global_flags:
     - id: help
@@ -70,6 +77,7 @@ root:
 
 subcommands:
   - id: mq
+    alias: module
     short: HCP/TFE Module Query
     description: Query HCP/TFE modules.
     usage: tfctl mq [options]
@@ -86,6 +94,7 @@ subcommands:
         description: Display modules in the "hr" org with "iam" in their name.
 
   - id: oq
+    alias: org
     short: HCP/TFE Organization Query
     description: Query HCP/TFE organizations.
     usage: tfctl oq [options]
@@ -101,6 +110,7 @@ subcommands:
         description: Display organizations with "myorg" in their name.
 
   - id: pq
+    alias: project
     short: HCP/TFE Project Query
     description: Query HCP/TFE projects.
     usage: tfctl pq [options]
@@ -117,6 +127,7 @@ subcommands:
         description: Display projects in the "hr" org with "prod" in their name.
 
   - id: ps
+    alias: summarize
     short: Plan summary
     description: Show a summary of the given plan.
     usage: tfctl ps [planfile] [options]
@@ -127,6 +138,7 @@ subcommands:
         description: Show the full plan output while also including a summary.
 
   - id: rq
+    alias: run
     short: HCP/TFE Run Query
     description: Query HCP/TFE runs for the given workspace.
     usage: tfctl rq [options]
@@ -144,6 +156,7 @@ subcommands:
         description: Display errored runs in the "prod" workspace of the "hr" org.
 
   - id: sq
+    alias: state
     short: State Query
     description: Query Terraform state files.
     usage: tfctl sq [RootDir] [options]
@@ -193,6 +206,7 @@ subcommands:
       - "When using encrypted state, `sq` will prompt for a passphrase or use `TF_VAR_passphrase`."
 
   - id: svq
+    alias: state-version
     short: State Version Query
     description: Query Terraform state version history.
     usage: tfctl svq [RootDir] [options]
@@ -209,6 +223,7 @@ subcommands:
         description: Display the five most recent state file versions and include the YYYY-MM-DD portion of the Created At information.
 
   - id: wq
+    alias: workspace
     short: HCP/TFE Workspace Query
     description: Query HCP/TFE workspaces.
     usage: tfctl wq [options]
