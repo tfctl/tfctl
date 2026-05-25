@@ -21,7 +21,6 @@ Query Terraform state files.
 | --concrete/-k |  | Only include concrete resources. |
 | --diff [ old[:new] \| + ] | CSV~1 CSV~0 | Find differences between state versions. [More info](#diff)|
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
-| --help |  | Show command help. |
 | --host/-h string | app.terraform.io | HCP/TFE host to use. Overrides the backend. |
 | --json-into string |  | secondary output path to write JSON output to. |
 | --local/--no-local |  | Show timestamps in local time according to your OS. |

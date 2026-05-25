@@ -44,6 +44,7 @@ root:
   usage: tfctl [global options] [command [command options]]
   commands:
     - names: mq
+      alias: module
       description: module registry query
     - names: oq
       description: organization query
