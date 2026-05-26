@@ -1,6 +1,7 @@
 # tfctl-rq
 
 > Query HCP/TFE runs for the given workspace.
+> Also available as: `tfctl run`
 
 - Display runs and include Created At and Status information.
 

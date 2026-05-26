@@ -1,6 +1,7 @@
 # tfctl-ps
 
 > Show a summary of the given plan.
+> Also available as: `tfctl summarize`
 
 - Show only a summary of a Terraform plan.
 

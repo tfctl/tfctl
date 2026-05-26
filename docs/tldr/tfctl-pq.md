@@ -1,6 +1,7 @@
 # tfctl-pq
 
 > Query HCP/TFE projects.
+> Also available as: `tfctl project`
 
 - Display projects and include Updated At information.
 

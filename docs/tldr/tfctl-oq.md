@@ -1,6 +1,7 @@
 # tfctl-oq
 
 > Query HCP/TFE organizations.
+> Also available as: `tfctl org`
 
 - Display organizations and include Created At information.
 
