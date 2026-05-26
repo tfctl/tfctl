@@ -48,6 +48,21 @@ release:
 		exit 1; \
 	fi
 
+	@if [ -n "$$(git tag --list '$(VERSION)')" ]; then \
+		echo "=== ERROR: Local tag $(VERSION) already exists."; \
+		exit 1; \
+	fi
+
+	@if git ls-remote --tags origin "$(VERSION)" | grep --quiet .; then \
+		echo "=== ERROR: Remote tag $(VERSION) already exists."; \
+		exit 1; \
+	fi
+
+	@if gh release view "$(VERSION)" --repo tfctl/tfctl >/dev/null 2>&1; then \
+		echo "=== ERROR: GitHub release $(VERSION) already exists."; \
+		exit 1; \
+	fi
+
 	@$(MAKE) docs VERSION="$(VERSION)"
 
 	@if [ -n "$$(git status --porcelain -- docs/)" ]; then \
