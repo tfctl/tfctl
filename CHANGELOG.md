@@ -11,7 +11,8 @@
 
 ### Chores
 
-- Makefile release target now checks for existing releases/tags and refreshes casts, if needed.
+- Makefile release target now refreshes casts, if needed.
+- Release workflow refactored to include more pre-flight tests and include CHANGELOG content in GH release.
 - Minor docs tweaks; docs template source file renamed to avoid confusion.
 
 ## v1.2.2 - 2026-05-17

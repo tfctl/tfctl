@@ -1,8 +1,40 @@
-.PHONY: default build check clean docs install release test tflint
+.PHONY: default build check clean docs install release release-check test tflint
 
 CLEAN_DAYS=30
 INSTALL_DIR=${HOME}/bin
 OUT=/tmp/tfctl
+
+define RELEASE_SHARED_CHECKS
+	@if ! echo "$(VERSION)" | grep --extended-regexp --quiet '^v[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo "=== ERROR: VERSION must be a valid semantic version (e.g. v0.2.0) with leading 'v'. Got: $(VERSION)"; \
+		exit 1; \
+	fi
+
+	@if ! grep --extended-regexp --quiet "^\#\# $(VERSION)" CHANGELOG.md; then \
+		echo "=== ERROR: CHANGELOG.md entry missing for $(VERSION)."; \
+		exit 1; \
+	fi
+
+	@if [ -n "$$(git tag --list '$(VERSION)')" ]; then \
+		echo "=== ERROR: Local tag $(VERSION) already exists."; \
+		exit 1; \
+	fi
+
+	@if git ls-remote --tags origin "$(VERSION)" | grep --quiet .; then \
+		echo "=== ERROR: Remote tag $(VERSION) already exists."; \
+		exit 1; \
+	fi
+
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "=== ERROR: GitHub CLI (gh) is required."; \
+		exit 1; \
+	fi
+
+	@if gh release view "$(VERSION)" --repo tfctl/tfctl >/dev/null 2>&1; then \
+		echo "=== ERROR: GitHub release $(VERSION) already exists."; \
+		exit 1; \
+	fi
+endef
 
 default: build
 
@@ -35,33 +67,30 @@ recast:
 		fi; \
 	done
 
+release-check:
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make release-check VERSION=vx.y.z"; exit 1; fi
+
+	$(RELEASE_SHARED_CHECKS)
+
+	@awk -v tag="$(VERSION)" '\
+		BEGIN { in_section=0; found=0; n=0 } \
+		{ sub(/\r$$/, "") } \
+		$$0 ~ ("^## " tag "([[:space:]]+-[[:space:]].*)?$$") { in_section=1; found=1; print; next } \
+		in_section && $$0 ~ "^## v[0-9]+\\.[0-9]+\\.[0-9]+([-.].*)?([[:space:]]+-[[:space:]].*)?$$" { exit } \
+		in_section { print; n++ } \
+		END { \
+			if (!found) { print "ERROR: release heading not found for " tag > "/dev/stderr"; exit 1 } \
+			if (n == 0) { print "ERROR: release notes section empty for " tag > "/dev/stderr"; exit 1 } \
+		} \
+	' CHANGELOG.md > /tmp/release-notes.md
+
+	@goreleaser check
+	@echo "=== release-check passed"
+
 release:
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
 
-	@if ! echo "$(VERSION)" | grep --extended-regexp --quiet '^v[0-9]+\.[0-9]+\.[0-9]+$$'; then \
-		echo "=== ERROR: VERSION must be a valid semantic version (e.g. v0.2.0) with leading 'v'. Got: $(VERSION)"; \
-		exit 1; \
-	fi
-
-	@if ! grep --extended-regexp --quiet "^\#\# $(VERSION)" CHANGELOG.md; then \
-		echo "=== ERROR: CHANGELOG.md entry missing for $(VERSION)."; \
-		exit 1; \
-	fi
-
-	@if [ -n "$$(git tag --list '$(VERSION)')" ]; then \
-		echo "=== ERROR: Local tag $(VERSION) already exists."; \
-		exit 1; \
-	fi
-
-	@if git ls-remote --tags origin "$(VERSION)" | grep --quiet .; then \
-		echo "=== ERROR: Remote tag $(VERSION) already exists."; \
-		exit 1; \
-	fi
-
-	@if gh release view "$(VERSION)" --repo tfctl/tfctl >/dev/null 2>&1; then \
-		echo "=== ERROR: GitHub release $(VERSION) already exists."; \
-		exit 1; \
-	fi
+	$(RELEASE_SHARED_CHECKS)
 
 	@$(MAKE) docs VERSION="$(VERSION)"
 

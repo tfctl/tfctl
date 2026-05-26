@@ -30,10 +30,38 @@ jobs:
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
           gpg --list-secret-keys
 
+      - name: Generate release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          if [[ -z "${tag}" ]]; then
+            echo "ERROR: GITHUB_REF_NAME is empty" >&2
+            exit 1
+          fi
+
+          awk -v tag="${tag}" '
+            BEGIN { in_section=0; found=0; n=0 }
+            { sub(/\r$/, "") }
+            $0 ~ ("^## " tag "([[:space:]]+-[[:space:]].*)?$") {
+              in_section=1
+              found=1
+              print
+              next
+            }
+            in_section && $0 ~ "^## v[0-9]+\.[0-9]+\.[0-9]+([-.].*)?([[:space:]]+-[[:space:]].*)?$" { exit }
+            in_section { print; n++ }
+            END {
+              if (!found) { print "ERROR: release heading not found for " tag > "/dev/stderr"; exit 1 }
+              if (n == 0) { print "ERROR: release notes section empty for " tag > "/dev/stderr"; exit 1 }
+            }
+          ' CHANGELOG.md > /tmp/release-notes.md
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
-          args: release
+          args: release --release-notes=/tmp/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GH_GORELEASER_PAT }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
