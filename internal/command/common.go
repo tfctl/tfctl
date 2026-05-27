@@ -17,6 +17,7 @@ import (
 
 	"github.com/tfctl/tfctl/internal/attrs"
 	"github.com/tfctl/tfctl/internal/backend/remote"
+	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/meta"
 	"github.com/tfctl/tfctl/internal/output"
 )
@@ -32,6 +33,11 @@ var DefaultListOptions = tfe.ListOptions{
 // --attrs, then applies the global transform spec.
 func BuildAttrs(cmd *cli.Command, defaults ...string) attrs.AttrList {
 	var attrList attrs.AttrList
+	if cmd != nil {
+		if attrsFromConfig, err := config.GetStringSlice(cmd.Name + ".attrs"); err == nil && len(attrsFromConfig) > 0 {
+			defaults = attrsFromConfig
+		}
+	}
 	//nolint:errcheck // AttrList.Set errors are logged internally
 	{
 		for _, defaultAttr := range defaults {

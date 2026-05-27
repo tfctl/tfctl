@@ -33,6 +33,7 @@ func realMain() int {
 	}
 
 	args = handleNakedCommand(args)
+	args = normalizeCommandAlias(args)
 
 	// If --help appears anywhere, skip command processing and let the CLI handle it.
 	helpFound := false
@@ -48,6 +49,21 @@ func realMain() int {
 	}
 
 	return initAndRunApp(args)
+}
+
+// normalizeCommandAlias rewrites known command aliases to their canonical
+// command names before any preprocessing or app initialization occurs.
+func normalizeCommandAlias(args []string) []string {
+	if len(args) <= 1 {
+		return args
+	}
+
+	switch args[1] {
+	case "summarize":
+		args[1] = "ps"
+	}
+
+	return args
 }
 
 // initAndRunApp initializes the app and runs it, returning the exit code.
@@ -122,7 +138,9 @@ func processCommandArgs(args []string) []string {
 		}
 
 		args = injectConfigSet(args, "defaults", insertIdx)
-		args = injectExplicitSet(args)
+		if args[1] != "ps" {
+			args = injectExplicitSet(args)
+		}
 		args = deduplicateFlags(args)
 
 		log.Debugf("args after set processing: args=%v", args)
@@ -231,15 +249,19 @@ func isExistingFile(path string) bool {
 // injectExplicitSet handles the @set logic for all commands, expanding set
 // arguments at the @set position.
 func injectExplicitSet(args []string) []string {
-	// Look for an explicit @set argument starting from starting idx.
+	// Look for an explicit @set argument starting from front.
 	idx := 2
 	set := ""
 	setIdx := len(args)
 
 	for i, a := range args[idx:] {
-		if strings.HasPrefix(a, "@") {
+		tokenIdx := idx + i
+
+		// We need to skip --attrs and --filter flags since they also use `@` for
+		// to indicate a predefine value as opposed to an explicit set.
+		if strings.HasPrefix(a, "@") && !shouldSkipExplicitSetToken(args, tokenIdx) {
 			set = strings.TrimPrefix(a, "@")
-			setIdx = 2 + i
+			setIdx = tokenIdx
 			args = append(args[:setIdx], args[setIdx+1:]...)
 			break
 		}
@@ -255,4 +277,19 @@ func injectExplicitSet(args []string) []string {
 	}
 
 	return args
+}
+
+// shouldSkipExplicitSetToken returns true when n @token is the value argument
+// for attrs/filter flags and should not be treated as an explicit set.
+func shouldSkipExplicitSetToken(args []string, tokenIdx int) bool {
+	if tokenIdx <= 0 || tokenIdx >= len(args) {
+		return false
+	}
+
+	switch args[tokenIdx-1] {
+	case "--attrs", "-a", "--filter", "-f":
+		return true
+	default:
+		return false
+	}
 }

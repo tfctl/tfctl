@@ -1,0 +1,41 @@
+// Copyright (c) 2026 Steve Taranto <staranto@gmail.com>.
+// SPDX-License-Identifier: Apache-2.0
+// no-cloc
+
+package command
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/urfave/cli/v3"
+
+	"github.com/tfctl/tfctl/internal/config"
+)
+
+func TestBuildAttrs_UsesCommandPresetDefaults(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"mq": map[string]interface{}{
+				"attrs": []interface{}{".cfg"},
+			},
+		},
+		Namespace: "mq",
+	}
+
+	cmd := &cli.Command{
+		Name: "mq",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "attrs"},
+		},
+	}
+
+	attrs := BuildAttrs(cmd, ".default")
+
+	assert.Equal(t, "cfg:cfg:", attrs.String())
+}

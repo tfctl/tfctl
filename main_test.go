@@ -7,7 +7,43 @@ package main
 import (
 	"reflect"
 	"testing"
+
+	"github.com/tfctl/tfctl/internal/config"
 )
+
+func TestNormalizeCommandAlias(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		expected []string
+	}{
+		{
+			name:     "summarize becomes ps",
+			args:     []string{"tfctl", "summarize", "-"},
+			expected: []string{"tfctl", "ps", "-"},
+		},
+		{
+			name:     "ps stays ps",
+			args:     []string{"tfctl", "ps", "-"},
+			expected: []string{"tfctl", "ps", "-"},
+		},
+		{
+			name:     "empty args unchanged",
+			args:     nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizeCommandAlias(append([]string(nil), tt.args...))
+
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("normalizeCommandAlias(%v) = %v, want %v", tt.args, got, tt.expected)
+			}
+		})
+	}
+}
 
 func TestDeduplicateFlags(t *testing.T) {
 	tests := []struct {
@@ -223,4 +259,98 @@ func splitFields(s string) []string {
 	}
 
 	return result
+}
+
+func TestShouldSkipExplicitSetToken(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		tokenIdx int
+		want     bool
+	}{
+		{
+			name:     "skip for long attrs flag",
+			args:     []string{"tfctl", "sq", "--attrs", "@full"},
+			tokenIdx: 3,
+			want:     true,
+		},
+		{
+			name:     "skip for short attrs flag",
+			args:     []string{"tfctl", "sq", "-a", "@full"},
+			tokenIdx: 3,
+			want:     true,
+		},
+		{
+			name:     "skip for long filter flag",
+			args:     []string{"tfctl", "sq", "--filter", "@pink"},
+			tokenIdx: 3,
+			want:     true,
+		},
+		{
+			name:     "skip for short filter flag",
+			args:     []string{"tfctl", "sq", "-f", "@pink"},
+			tokenIdx: 3,
+			want:     true,
+		},
+		{
+			name:     "do not skip standalone explicit set",
+			args:     []string{"tfctl", "sq", "@full"},
+			tokenIdx: 2,
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := shouldSkipExplicitSetToken(tt.args, tt.tokenIdx)
+			if got != tt.want {
+				t.Errorf("shouldSkipExplicitSetToken(%v, %d) = %v, want %v", tt.args, tt.tokenIdx, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestProcessCommandArgs_PsSkipsExplicitSet(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"ps": map[string]interface{}{
+				"full": []interface{}{"--attrs .resource,.action"},
+			},
+		},
+	}
+
+	args := []string{"tfctl", "ps", "@full"}
+	got := processCommandArgs(args)
+	want := []string{"tfctl", "ps", "-", "@full"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs(%v) = %v, want %v", args, got, want)
+	}
+}
+
+func TestProcessCommandArgs_SummarizeMatchesPs(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"ps": map[string]interface{}{
+				"defaults": []interface{}{"--output text"},
+			},
+		},
+	}
+
+	psArgs := processCommandArgs([]string{"tfctl", "ps"})
+	summarizeArgs := processCommandArgs(normalizeCommandAlias([]string{"tfctl", "summarize"}))
+
+	if !reflect.DeepEqual(summarizeArgs, psArgs) {
+		t.Errorf("summarize args = %v, want %v", summarizeArgs, psArgs)
+	}
 }

@@ -58,7 +58,9 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
-	attrs := BuildAttrs(cmd, "!.mode", "!.type", ".resource", "id", "name")
+	defaultAttrs := []string{"!.mode", "!.type", ".resource", "id", "name"}
+
+	attrs := BuildAttrs(cmd, defaultAttrs...)
 	log.Debugf("attrs: %v", attrs)
 
 	var doc []byte
@@ -98,7 +100,6 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 		if cmd.Bool("chop") {
 			chopPrefix(dataset)
 		}
-
 		return nil
 	}
 
