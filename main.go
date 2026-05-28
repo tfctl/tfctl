@@ -142,6 +142,7 @@ func processCommandArgs(args []string) []string {
 			args = injectExplicitSet(args)
 		}
 		args = deduplicateFlags(args)
+		args = expandFlagValuePresets(args, "--attrs", "-a", "attrs")
 
 		log.Debugf("args after set processing: args=%v", args)
 
@@ -151,6 +152,76 @@ func processCommandArgs(args []string) []string {
 
 		return args
 	}
+}
+
+// expandFlagValuePresets expands @preset tokens in the value for a flag using
+// values from configRoot.<preset> in the loaded config.
+func expandFlagValuePresets(args []string, longFlag string, shortFlag string, configRoot string) []string {
+	if len(args) <= 2 {
+		return args
+	}
+
+	for i := 2; i < len(args); i++ {
+		arg := args[i]
+
+		switch {
+		case arg == longFlag || arg == shortFlag:
+			if i+1 < len(args) {
+				args[i+1] = expandPresetSegments(args[i+1], configRoot)
+				i++
+			}
+		case strings.HasPrefix(arg, longFlag+"="):
+			_, value, _ := strings.Cut(arg, "=")
+			args[i] = longFlag + "=" + expandPresetSegments(value, configRoot)
+		case strings.HasPrefix(arg, shortFlag+"="):
+			_, value, _ := strings.Cut(arg, "=")
+			args[i] = shortFlag + "=" + expandPresetSegments(value, configRoot)
+		}
+	}
+
+	return args
+}
+
+// expandPresetSegments replaces comma-delimited @preset segments using
+// configRoot.<preset> values from config.
+func expandPresetSegments(value string, configRoot string) string {
+	if value == "" || !strings.Contains(value, "@") {
+		return value
+	}
+
+	segments := strings.Split(value, ",")
+	var expanded []string
+
+	for _, segment := range segments {
+		part := strings.TrimSpace(segment)
+		if !strings.HasPrefix(part, "@") {
+			expanded = append(expanded, part)
+			continue
+		}
+
+		presetName := strings.TrimPrefix(part, "@")
+		if presetName == "" {
+			expanded = append(expanded, part)
+			continue
+		}
+
+		key := configRoot + "." + presetName
+
+		if presetValue, err := config.GetString(key); err == nil {
+			expanded = append(expanded, strings.TrimSpace(presetValue))
+			continue
+		}
+
+		if presetSlice, err := config.GetStringSlice(key); err == nil && len(presetSlice) > 0 {
+			expanded = append(expanded, strings.Join(presetSlice, ","))
+			continue
+		}
+
+		// Unknown preset: preserve original token.
+		expanded = append(expanded, part)
+	}
+
+	return strings.Join(expanded, ",")
 }
 
 // injectConfigSet retrieves the config slice for the given key, expands each

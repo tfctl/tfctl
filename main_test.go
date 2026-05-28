@@ -354,3 +354,172 @@ func TestProcessCommandArgs_SummarizeMatchesPs(t *testing.T) {
 		t.Errorf("summarize args = %v, want %v", summarizeArgs, psArgs)
 	}
 }
+
+func TestExpandPresetSegments(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"attrs": map[string]interface{}{
+				"set1": "arn,name",
+				"set2": []interface{}{"created-at", "workspace"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "single preset from string",
+			input: "@set1",
+			want:  "arn,name",
+		},
+		{
+			name:  "mixed literal and preset",
+			input: "created-at,@set1",
+			want:  "created-at,arn,name",
+		},
+		{
+			name:  "multiple presets",
+			input: "@set1,@set2",
+			want:  "arn,name,created-at,workspace",
+		},
+		{
+			name:  "multiple presets with literal",
+			input: "@set1,@set2,created-at",
+			want:  "arn,name,created-at,workspace,created-at",
+		},
+		{
+			name:  "single preset from slice",
+			input: "@set2",
+			want:  "created-at,workspace",
+		},
+		{
+			name:  "unknown preset preserved",
+			input: "@unknown",
+			want:  "@unknown",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandPresetSegments(tt.input, "attrs")
+			if got != tt.want {
+				t.Errorf("expandPresetSegments(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExpandFlagValuePresets(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"attrs": map[string]interface{}{
+				"set1": "arn,name",
+				"set2": []interface{}{"created-at", "workspace"},
+				"set3": "workspace,",
+			},
+		},
+	}
+
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			name: "long flag with separate value",
+			args: []string{"tfctl", "mq", "--attrs", "@set1"},
+			want: []string{"tfctl", "mq", "--attrs", "arn,name"},
+		},
+		{
+			name: "short flag with separate value",
+			args: []string{"tfctl", "mq", "-a", "@set1"},
+			want: []string{"tfctl", "mq", "-a", "arn,name"},
+		},
+		{
+			name: "long flag equals syntax",
+			args: []string{"tfctl", "mq", "--attrs=@set1"},
+			want: []string{"tfctl", "mq", "--attrs=arn,name"},
+		},
+		{
+			name: "mixed literal and preset",
+			args: []string{"tfctl", "mq", "--attrs", "created-at,@set1"},
+			want: []string{"tfctl", "mq", "--attrs", "created-at,arn,name"},
+		},
+		{
+			name: "unknown preset unchanged",
+			args: []string{"tfctl", "mq", "--attrs", "@unknown"},
+			want: []string{"tfctl", "mq", "--attrs", "@unknown"},
+		},
+		{
+			name: "multiple presets",
+			args: []string{"tfctl", "mq", "--attrs", "@set1,@set2"},
+			want: []string{"tfctl", "mq", "--attrs", "arn,name,created-at,workspace"},
+		},
+		{
+			name: "multiple presets with literal",
+			args: []string{"tfctl", "mq", "--attrs", "@set1,@set2,created-at"},
+			want: []string{"tfctl", "mq", "--attrs", "arn,name,created-at,workspace,created-at"},
+		},
+		{
+			name: "multiple presets with transform spec",
+			args: []string{"tfctl", "mq", "--attrs", "@set1,name::U"},
+			want: []string{"tfctl", "mq", "--attrs", "arn,name,name::U"},
+		},
+		{
+			// The trailing comma should be kept here as the stripping of it doesn't
+			// occur until after preset expansion.
+			name: "preset with trailing comma maintained",
+			args: []string{"tfctl", "mq", "--attrs", "@set3"},
+			want: []string{"tfctl", "mq", "--attrs", "workspace,"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandFlagValuePresets(
+				append([]string(nil), tt.args...),
+				"--attrs",
+				"-a",
+				"attrs",
+			)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("expandFlagValuePresets(%v) = %v, want %v", tt.args, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestProcessCommandArgs_ExpandsAttrsPreset(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"attrs": map[string]interface{}{
+				"set1": "arn,name",
+			},
+		},
+	}
+
+	got := processCommandArgs([]string{"tfctl", "mq", "--attrs", "created-at,@set1"})
+	want := []string{"tfctl", "mq", "--attrs", "created-at,arn,name"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs attrs expansion got %v, want %v", got, want)
+	}
+}

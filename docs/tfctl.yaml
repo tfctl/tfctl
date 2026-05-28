@@ -14,6 +14,7 @@
 # arguments. So, for example, `tfctl sq --no-titles` would "cancel out" the
 # global `--titles` argument, but `--padding 1` would still be in effect.
 defaults:
+  - --local
   - --padding 1
   - --titles
 
@@ -24,10 +25,9 @@ defaults:
 # higher precedent than "global" arguments, but lower than command-specific
 # arguments and command line arguments. For example, with the configuration
 # below, the command `tfctl oq` will effectively become `tfctl oq --host
-# app.terraform.io --org tfctl`.
+# app.terraform.io`.
 nostate:
   - --host app.terraform.io
-  - --org tfctl
 
 #
 # COMMAND-SPECIFIC CONFIGURATION
@@ -35,34 +35,59 @@ nostate:
 
 # Each of the commands (mq, oq, sq, etc) can have their own configuration
 # section. Each section is made up of one or more "sets", which are, in turn,
-# a list of command line arguments to automatically use for that command. The
-# set identifier `defaults` is reserved and is automatically injected into every
-# command line for it's parent command. Any arguments in a set can explicitly be
-# overriden on the command line.
+# a list of arguments to automatically use for that command. The set identifier
+# `defaults` is reserved and is automatically injected into every command line
+# for it's parent command. Any arguments in a set can explicitly be overriden on
+# the command line.
 #
-# In this example, all sq command lines will automatically be injected with the
-# `--padding 2` and `--short` options. So, the entered command line `tfctl sq`
-# will effectively become `tfctl sq --padding 2 --short`.  If the user enters
-# `tfctl sq --padding 4`, the effective command line will be `tfctl sq
-# --padding 4 --short`, since command line arguments override set arguments.
-#
-# Alternate argument sets can be specified using the '@set' syntax on the
-# command line. For example, `tfctl sq @example` will inject the arguments from
-# the `example`` set in addition to the `defaults`` set. So, `tfctl sq` will
-# become `tfctl sq --padding 2 --short --color --sort id`.
-#
-# Note that argument sets can be specified as YAML collections (`defaults`) or
-# as a single string (`example`).
 sq:
+  # attrs is a reserved key that defines the default list of output attributes
+  # to use for the command. The command itself has a hard-coded list of default
+  # attributes, but that value can be overridden here so that a different
+  # default list can be used.
+  attrs:
+    - "!.mode"
+    - "!.type"
+    - .resource
+    - id
+    - name
+
+  # defaults is a reserved set identifier that is a list of arguments that are
+  # automatically injected into every sq command line.
+  #
+  # In this example, all sq command lines will automatically be injected with
+  # the `--padding 1` and `--short` options. So, the entered command line
+  # `tfctl sq` will effectively become `tfctl sq --padding 1 --short`.  If the
+  # user enters, for example, `tfctl sq --padding 4`, the effective command line
+  # will be `tfctl sq --padding 4 --short`, since command line arguments
+  # override set arguments.
   defaults:
-    - --padding 2
+    - --padding 1
     - --short
 
+  # Alternate argument sets can be specified using the '@set' syntax on the
+  # command line. For example, `tfctl sq @example` will inject the arguments
+  # from the `example` set in addition to the `defaults`` set. So, `tfctl sq`
+  # will become `tfctl sq --padding 1 --short --color --sort id`.
+  #
+  # Note that argument sets can be specified as YAML collections (`defaults`) or
+  # as a single string (`example`).
   example: --color --sort id
 
 #
 # ADDITIONAL CONFIGURATION
 #
+
+attrs:
+  # Global presets that can be used in any command's --attrs arguement.
+  # For example, with the configuration below, the command `tfctl sq --attrs
+  # set1` will effectively become `tfctl sq --attrs region,tags_all.layer`.
+  # Not that these presets are additive, so `tfctl sq --attrs "arn,@set1"` will
+  # become `tfctl sq --attrs arn,region,tags_all.layer`. Multiple presets can be
+  # used as well. For example, `tfctl sq --attrs "@set1,@set2"` will become
+  # `tfctl sq --attrs region,tags_all.layer,arn:ARN:u`.
+  set1: region,tags_all.layer
+  set2: arn:ARN:u
 
 cache:
   # Number of hours after which cached state file info is considered stale and
@@ -74,9 +99,14 @@ cache:
   # be enabled or disabled here. By default it is disabled. This setting can
   # be overriden by the TFCTL_CACHE environment variable.
   enabled: false
+
 # Colors to use for --output=text --colors. They must be set here and cannot be
 # changed on the command line.  Valid #rrggbb HTML codes only.
 # colors:
 #   title: "#b58900"
 #   even: "#ffffff"
 #   odd: "#859900"
+
+s3_backend:
+  path_style: true
+  checksum: false # true=when_required, false=when_supported

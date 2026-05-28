@@ -184,13 +184,13 @@ func TestAttrList_Type(t *testing.T) {
 // We validate local time transformation using the system's current location
 // only, with no dependence on TZ environment variables.
 func TestAttr_Transform_Time_LocalUsesSystemZone(t *testing.T) {
-	t.Setenv("TZ", "")
 	input := "2024-01-15T10:00:00Z"
 	attr := Attr{TransformSpec: "t"}
+	loc := time.Now().Location()
 	got := fmt.Sprintf("%v", attr.Transform(input))
 
 	tParsed, err := time.Parse(time.RFC3339, input)
 	require.NoError(t, err)
-	want := tParsed.In(time.Now().Location()).Format("2006-01-02T15:04:05MST")
+	want := tParsed.In(loc).Format("2006-01-02T15:04:05MST")
 	assert.Equal(t, want, got)
 }

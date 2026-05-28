@@ -30,7 +30,7 @@
       transformSpec: "l"
   wantSpecs:
     - "U,U"
-    - "U,"
+    - "U"
     - "U,l"
   wantErr: false
 
@@ -50,7 +50,7 @@
       transformSpec: "U"
   wantSpecs:
     - "10,10"
-    - "10,"
+    - "10"
     - "10,U"
   wantErr: false
 
@@ -70,7 +70,7 @@
       transformSpec: "l"
   wantSpecs:
     - "U20,U20"
-    - "U20,"
+    - "U20"
     - "U20,l"
   wantErr: false
 

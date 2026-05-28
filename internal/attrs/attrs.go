@@ -39,27 +39,29 @@ func (a *Attr) Transform(value interface{}) interface{} {
 			log.Tracef("map value: value=%v", value)
 			return mapValue
 		}
-		log.Tracef("non-string value: value=%v", value)
+		log.Tracef("non-string value: key=%s outputKey=%s value=%v", a.Key, a.OutputKey, value)
 		return value
 	}
+
+	log.Tracef("transform start: key=%s outputKey=%s spec=%s value=%s", a.Key, a.OutputKey, a.TransformSpec, result)
 
 	// Convert UTC time to local or time ago.
 	if strings.ContainsAny(a.TransformSpec, "tT") {
 		loc := time.Now().Location()
-		if loc == nil {
-			return result
-		}
-		t, err := time.Parse(time.RFC3339, result)
-		if err != nil {
-			return result
-		}
-		local := t.In(loc)
-		if strings.Contains(a.TransformSpec, "T") {
-			result = humanize.Time(local)
-			log.Tracef("time ago: result=%s", result)
-		} else {
-			result = local.Format("2006-01-02T15:04:05MST")
-			log.Tracef("time local: result=%s", result)
+		if loc != nil {
+			t, err := time.Parse(time.RFC3339, result)
+			if err == nil {
+				local := t.In(loc)
+				if strings.Contains(a.TransformSpec, "T") {
+					result = humanize.Time(local)
+					log.Tracef("time ago: result=%s", result)
+				} else {
+					result = local.Format("2006-01-02T15:04:05MST")
+					log.Tracef("time local: result=%s", result)
+				}
+			} else {
+				log.Tracef("time skip: key=%s value=%s err=%v", a.Key, result, err)
+			}
 		}
 	}
 
@@ -69,6 +71,8 @@ func (a *Attr) Transform(value interface{}) interface{} {
 	// IOW... --attrs '*::U,name::l' will be lower case.
 	lastL := strings.LastIndexAny(a.TransformSpec, "lL")
 	lastU := strings.LastIndexAny(a.TransformSpec, "uU")
+
+	log.Tracef("case analysis: key=%s spec=%s lastL=%d lastU=%d", a.Key, a.TransformSpec, lastL, lastU)
 
 	if lastL > lastU {
 		result = strings.ToLower(result)
@@ -103,6 +107,7 @@ func (a *Attr) Transform(value interface{}) interface{} {
 		}
 	}
 
+	log.Tracef("transform done: key=%s outputKey=%s result=%s", a.Key, a.OutputKey, result)
 	return result
 }
 
@@ -171,6 +176,7 @@ specloop:
 		attr.TransformSpec = ""
 		if len(fields) > transformIdx {
 			attr.TransformSpec = strings.TrimSpace(fields[transformIdx])
+			attr.TransformSpec = strings.TrimSuffix(attr.TransformSpec, ",")
 		}
 		log.Tracef("transform set: spec=%s", attr.TransformSpec)
 
@@ -226,9 +232,14 @@ func (a *AttrList) SetGlobalTransformSpec() error {
 		return nil
 	}
 
-	// Prepend the global spec onto each attribute's spec.
+	// Prepend the global spec onto each attribute's spec, omitting the separator
+	// if the attr's current spec is empty.
 	for attr := range *a {
-		(*a)[attr].TransformSpec = spec + "," + (*a)[attr].TransformSpec
+		if (*a)[attr].TransformSpec == "" {
+			(*a)[attr].TransformSpec = spec
+		} else {
+			(*a)[attr].TransformSpec = spec + "," + (*a)[attr].TransformSpec
+		}
 	}
 	log.Debugf("specs prepended")
 
