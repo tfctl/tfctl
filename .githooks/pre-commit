@@ -45,9 +45,9 @@ else
   echo "[pre-commit] no staged sq.cast changes; skipping gif generation." >&2
 fi
 
-# Run Go quality checks if any .go files are staged
+# Run Go quality checks if any .go files are staged.
 if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.go$'; then
-  bash tools/check.sh || exit 1
+  make check || exit 1
 else
   echo "[pre-commit] no staged .go changes; skipping Go quality checks." >&2
 fi

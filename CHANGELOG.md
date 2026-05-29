@@ -11,6 +11,11 @@
 
 - Fixed bug where attribute transformations were ignored on non-time fields.
 
+### Chores
+
+- Retired tools/check.sh and release.sh in favor of make targets.
+- Lint cleanup.
+
 ## v1.2.3 - 2026-05-25
 
 ### Added

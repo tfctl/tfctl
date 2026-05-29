@@ -1,4 +1,4 @@
-.PHONY: default build check clean docs install release release-check test tflint
+.PHONY: default build check clean docs install lint release release-check shadow static test tflint vet
 
 CLEAN_DAYS=30
 INSTALL_DIR=${HOME}/bin
@@ -42,7 +42,11 @@ build:
 	go build -o $(OUT)
 
 check:
-	tools/check.sh --all
+	@status=0; \
+	for target in lint shadow static vet test; do \
+		$(MAKE) $$target || status=1; \
+	done; \
+	exit $$status
 
 clean:
 	tools/clean.sh 30
@@ -53,6 +57,9 @@ docs: recast
 
 install: build
 	mv $(OUT) $(INSTALL_DIR)
+
+lint:
+	golangci-lint run
 
 recast:
 	@set -e; \
@@ -66,6 +73,25 @@ recast:
 			echo "=== Skipping $$cast"; \
 		fi; \
 	done
+
+release:
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
+
+	$(RELEASE_SHARED_CHECKS)
+
+	@$(MAKE) docs VERSION="$(VERSION)"
+
+	@if [ -n "$$(git status --porcelain -- docs/)" ]; then \
+		echo "=== Docs changed after generation; committing docs updates."; \
+		git add docs/; \
+		git commit --message "docs: regenerate docs for $(VERSION)."; \
+	fi
+
+	git push origin --delete "$(VERSION)" || true
+	git tag --delete "$(VERSION)" || true
+	git tag "$(VERSION)" --message "Release $(VERSION)."
+	git push origin
+	git push origin "$(VERSION)"
 
 release-check:
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make release-check VERSION=vx.y.z"; exit 1; fi
@@ -87,24 +113,14 @@ release-check:
 	@goreleaser check
 	@echo "=== release-check passed"
 
-release:
-	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
+shadow:
+	shadow ./...
 
-	$(RELEASE_SHARED_CHECKS)
-
-	@$(MAKE) docs VERSION="$(VERSION)"
-
-	@if [ -n "$$(git status --porcelain -- docs/)" ]; then \
-		echo "=== Docs changed after generation; committing docs updates."; \
-		git add docs/; \
-		git commit --message "docs: regenerate docs for $(VERSION)."; \
-	fi
-
-	git push origin --delete "$(VERSION)" || true
-	git tag --delete "$(VERSION)" || true
-	git tag "$(VERSION)" --message "Release $(VERSION)."
-	git push origin
-	git push origin "$(VERSION)"
+static:
+	staticcheck ./...
 
 test: build
 	go test ./... --count 1 -v
+
+vet:
+	go vet -printfuncs='Debugf,Infof,Warnf,Errorf' ./...
