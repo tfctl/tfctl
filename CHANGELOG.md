@@ -1,10 +1,15 @@
 # Changelog
 
-## [Unreleased]
+## 1.3.0 - 2026-05-29
 
 ### Added
 
-- Each subcommand can now have customized, default attr sets.
+- Reimplemented user-defined and default attr sets.
+- Reimplemented user-defined filter sets.
+
+### Fixed
+
+- Fixed bug where attribute transformations were ignored on non-time fields.
 
 ## v1.2.3 - 2026-05-25
 

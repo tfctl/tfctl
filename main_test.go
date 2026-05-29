@@ -228,9 +228,7 @@ func injectConfigSetTestable(args []string, entries []string, insertIdx int) []s
 
 	var expanded []string
 	for _, entry := range entries {
-		for _, field := range splitFields(entry) {
-			expanded = append(expanded, field)
-		}
+		expanded = append(expanded, splitFields(entry)...)
 	}
 
 	return append(args[:insertIdx], append(expanded, args[insertIdx:]...)...)
@@ -409,7 +407,7 @@ func TestExpandPresetSegments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := expandPresetSegments(tt.input, "attrs")
+			got := expandPresetSegments(tt.input, "attrs", ",")
 			if got != tt.want {
 				t.Errorf("expandPresetSegments(%q) = %q, want %q", tt.input, got, tt.want)
 			}
@@ -494,11 +492,110 @@ func TestExpandFlagValuePresets(t *testing.T) {
 				"--attrs",
 				"-a",
 				"attrs",
+				",",
 			)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("expandFlagValuePresets(%v) = %v, want %v", tt.args, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestExpandFlagValuePresets_Filter(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"filters": map[string]interface{}{
+				"set1": "_organization@prod",
+				"set2": []interface{}{"_workspace@dev", "status@applied"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			name: "long flag with separate value",
+			args: []string{"tfctl", "mq", "--filter", "@set1"},
+			want: []string{"tfctl", "mq", "--filter", "_organization@prod"},
+		},
+		{
+			name: "short flag with separate value",
+			args: []string{"tfctl", "mq", "-f", "@set1"},
+			want: []string{"tfctl", "mq", "-f", "_organization@prod"},
+		},
+		{
+			name: "long flag equals syntax",
+			args: []string{"tfctl", "mq", "--filter=@set1"},
+			want: []string{"tfctl", "mq", "--filter=_organization@prod"},
+		},
+		{
+			name: "mixed literal and preset",
+			args: []string{"tfctl", "mq", "--filter", "name@prod,@set1"},
+			want: []string{"tfctl", "mq", "--filter", "name@prod,_organization@prod"},
+		},
+		{
+			name: "multiple presets",
+			args: []string{"tfctl", "mq", "--filter", "@set1,@set2"},
+			want: []string{"tfctl", "mq", "--filter", "_organization@prod,_workspace@dev,status@applied"},
+		},
+		{
+			name: "unknown preset unchanged",
+			args: []string{"tfctl", "mq", "--filter", "@unknown"},
+			want: []string{"tfctl", "mq", "--filter", "@unknown"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandFlagValuePresets(
+				append([]string(nil), tt.args...),
+				"--filter",
+				"-f",
+				"filters",
+				",",
+			)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("expandFlagValuePresets(%v) = %v, want %v", tt.args, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExpandFlagValuePresets_Filter_CustomDelimiter(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	t.Setenv("TFCTL_FILTER_DELIM", "|")
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"filters": map[string]interface{}{
+				"set1": "status@applied",
+			},
+		},
+	}
+
+	got := expandFlagValuePresets(
+		[]string{"tfctl", "mq", "--filter", "name@prod|@set1"},
+		"--filter",
+		"-f",
+		"filters",
+		filterDelimiter(),
+	)
+	want := []string{"tfctl", "mq", "--filter", "name@prod|status@applied"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("custom delimiter filter expansion got %v, want %v", got, want)
 	}
 }
 
@@ -521,5 +618,64 @@ func TestProcessCommandArgs_ExpandsAttrsPreset(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("processCommandArgs attrs expansion got %v, want %v", got, want)
+	}
+}
+
+func TestProcessCommandArgs_ExpandsFilterPreset(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"filters": map[string]interface{}{
+				"set1": "_organization@prod",
+			},
+		},
+	}
+
+	got := processCommandArgs([]string{"tfctl", "mq", "--filter", "name@prod,@set1"})
+	want := []string{"tfctl", "mq", "--filter", "name@prod,_organization@prod"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs filter expansion got %v, want %v", got, want)
+	}
+}
+
+func TestProcessCommandArgs_ExpandsAttrsAndFilterPresets_WithRootDir(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"attrs": map[string]interface{}{
+				"set1": "region,layer",
+			},
+			"filters": map[string]interface{}{
+				"set2": "layer=myapp",
+			},
+		},
+	}
+
+	rootDir := t.TempDir()
+
+	got := processCommandArgs(
+		[]string{"tfctl", "sq", rootDir, "--attrs", "@set1", "--filter", "@set2"},
+	)
+	want := []string{
+		"tfctl",
+		"sq",
+		rootDir,
+		"--attrs",
+		"region,layer",
+		"--filter",
+		"layer=myapp",
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs attrs+filter expansion got %v, want %v", got, want)
 	}
 }

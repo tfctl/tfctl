@@ -142,7 +142,14 @@ func processCommandArgs(args []string) []string {
 			args = injectExplicitSet(args)
 		}
 		args = deduplicateFlags(args)
-		args = expandFlagValuePresets(args, "--attrs", "-a", "attrs")
+		args = expandFlagValuePresets(args, "--attrs", "-a", "attrs", ",")
+		args = expandFlagValuePresets(
+			args,
+			"--filter",
+			"-f",
+			"filters",
+			filterDelimiter(),
+		)
 
 		log.Debugf("args after set processing: args=%v", args)
 
@@ -155,8 +162,14 @@ func processCommandArgs(args []string) []string {
 }
 
 // expandFlagValuePresets expands @preset tokens in the value for a flag using
-// values from configRoot.<preset> in the loaded config.
-func expandFlagValuePresets(args []string, longFlag string, shortFlag string, configRoot string) []string {
+// values from <configRoot>.<preset> in the loaded config file.
+//
+// args - full command line argument slice.
+// longFlag/shortFlag - the flags being processed.
+// configRoot - top-level config key used to find presets.
+// delimiter - on what character segments are split and rejoined.
+func expandFlagValuePresets(args []string, longFlag string, shortFlag string,
+	configRoot string, delimiter string) []string {
 	if len(args) <= 2 {
 		return args
 	}
@@ -167,15 +180,23 @@ func expandFlagValuePresets(args []string, longFlag string, shortFlag string, co
 		switch {
 		case arg == longFlag || arg == shortFlag:
 			if i+1 < len(args) {
-				args[i+1] = expandPresetSegments(args[i+1], configRoot)
+				args[i+1] = expandPresetSegments(args[i+1], configRoot, delimiter)
 				i++
 			}
 		case strings.HasPrefix(arg, longFlag+"="):
 			_, value, _ := strings.Cut(arg, "=")
-			args[i] = longFlag + "=" + expandPresetSegments(value, configRoot)
+			args[i] = longFlag + "=" + expandPresetSegments(
+				value,
+				configRoot,
+				delimiter,
+			)
 		case strings.HasPrefix(arg, shortFlag+"="):
 			_, value, _ := strings.Cut(arg, "=")
-			args[i] = shortFlag + "=" + expandPresetSegments(value, configRoot)
+			args[i] = shortFlag + "=" + expandPresetSegments(
+				value,
+				configRoot,
+				delimiter,
+			)
 		}
 	}
 
@@ -183,13 +204,21 @@ func expandFlagValuePresets(args []string, longFlag string, shortFlag string, co
 }
 
 // expandPresetSegments replaces comma-delimited @preset segments using
-// configRoot.<preset> values from config.
-func expandPresetSegments(value string, configRoot string) string {
+// <configRoot>.<preset> values from the load config file.
+//
+// value - is the raw flag value to process.
+// configRoot - top-level config key used to find presets.
+// delimiter - on what character segments are split and rejoined.
+func expandPresetSegments(value string, configRoot string, delimiter string) string {
 	if value == "" || !strings.Contains(value, "@") {
 		return value
 	}
 
-	segments := strings.Split(value, ",")
+	if delimiter == "" {
+		delimiter = ","
+	}
+
+	segments := strings.Split(value, delimiter)
 	var expanded []string
 
 	for _, segment := range segments {
@@ -213,7 +242,7 @@ func expandPresetSegments(value string, configRoot string) string {
 		}
 
 		if presetSlice, err := config.GetStringSlice(key); err == nil && len(presetSlice) > 0 {
-			expanded = append(expanded, strings.Join(presetSlice, ","))
+			expanded = append(expanded, strings.Join(presetSlice, delimiter))
 			continue
 		}
 
@@ -221,7 +250,17 @@ func expandPresetSegments(value string, configRoot string) string {
 		expanded = append(expanded, part)
 	}
 
-	return strings.Join(expanded, ",")
+	return strings.Join(expanded, delimiter)
+}
+
+// filterDelimiter returns the delimiter used for --filter values.
+func filterDelimiter() string {
+	delim := ","
+	if d, ok := os.LookupEnv("TFCTL_FILTER_DELIM"); ok && d != "" {
+		delim = d
+	}
+
+	return delim
 }
 
 // injectConfigSet retrieves the config slice for the given key, expands each
