@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/tfctl/tfctl/internal/cacheutil"
@@ -58,8 +59,7 @@ func normalizeCommandAlias(args []string) []string {
 		return args
 	}
 
-	switch args[1] {
-	case "summarize":
+	if args[1] == "summarize" {
 		args[1] = "ps"
 	}
 
@@ -120,9 +120,12 @@ func processCommandArgs(args []string) []string {
 		// If args[2] is a directory or file, that means that the IAC root has been
 		// specified, so we need to insert after that.
 		if len(args) > 2 {
-			if isExistingFile(args[2]) {
+
+			candidatePath := filepath.Clean(args[2])
+
+			if isExistingFile(candidatePath) {
 				insertIdx = 3
-			} else if stat, err := os.Stat(args[2]); err == nil && stat.IsDir() {
+			} else if stat, err := os.Stat(candidatePath); err == nil && stat.IsDir() {
 				insertIdx = 3
 			}
 		}
@@ -350,7 +353,8 @@ func processPsArgs(args []string) []string {
 
 // isExistingFile checks if the given path exists and is a file.
 func isExistingFile(path string) bool {
-	if _, err := os.Stat(path); err == nil {
+	candidatePath := filepath.Clean(path)
+	if stat, err := os.Stat(candidatePath); err == nil && !stat.IsDir() {
 		return true
 	}
 	return false

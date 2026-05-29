@@ -428,7 +428,7 @@ func getCommonFields(resource gjson.Result) map[string]interface{} {
 
 // WriteIntoFiles writes the provided data into files specified by the
 // --json-into and --yaml-into flags, if present. There is no check to know if
-// the output file can be succesfully written or if it already exists. In the
+// the output file can be successfully written or if it already exists. In the
 // latter case, the file will be overwritten.
 func writeIntoFiles(cmd *cli.Command, data interface{}) {
 	if path2 := cmd.String("json-into"); path2 != "" {

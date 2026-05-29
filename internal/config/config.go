@@ -254,7 +254,7 @@ func (cfg *Type) get(kspec string) (any, error) {
 func getConfigFile() (string, error) {
 	// Check for TFCTL_CFG_FILE environment variable first
 	if cfgPath := os.Getenv("TFCTL_CFG_FILE"); cfgPath != "" {
-		if fileInfo, err := os.Stat(cfgPath); err == nil {
+		if fileInfo, err := os.Stat(filepath.Clean(cfgPath)); err == nil {
 			if !fileInfo.IsDir() {
 				log.Debugf("using config file from TFCTL_CFG_FILE: %s", cfgPath)
 				return cfgPath, nil

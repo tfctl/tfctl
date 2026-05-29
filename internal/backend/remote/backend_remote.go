@@ -88,7 +88,7 @@ func (be *BackendRemote) Client(validate ...bool) (*tfe.Client, error) {
 	}
 
 	if len(validate) > 0 && validate[0] {
-		if !(client.IsCloud() || client.IsEnterprise()) {
+		if !client.IsCloud() && !client.IsEnterprise() {
 			return nil, fmt.Errorf("failed to validate TFE client: %w", ErrInvalidClientType)
 		}
 	}
@@ -269,7 +269,7 @@ func (be *BackendRemote) Runs() ([]*tfe.Run, error) {
 		if page.NextPage == 0 {
 			break
 		}
-		options.ListOptions.PageNumber++
+		options.PageNumber++
 	}
 
 	return results, nil
@@ -452,10 +452,10 @@ func (be *BackendRemote) StateVersions(augmenter ...func(context.Context, *cli.C
 
 		log.Debugf("page: %d, total: %d", page.CurrentPage, len(results))
 
-		if page.Pagination.NextPage == 0 {
+		if page.NextPage == 0 {
 			break
 		}
-		options.ListOptions.PageNumber++
+		options.PageNumber++
 	}
 
 	// Enrich each item by fetching its full details with includes if --deep is enabled.

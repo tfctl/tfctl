@@ -63,7 +63,6 @@ func psCommandAction(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	var input io.ReadCloser
-	var err error
 
 	// Determine input source: file or stdin
 	if planInput == "-" {
@@ -74,7 +73,7 @@ func psCommandAction(ctx context.Context, cmd *cli.Command) error {
 		} else if info.IsDir() {
 			return fmt.Errorf("plan input cannot be a directory: %s", planInput)
 		}
-		input, err = os.Open(planInput)
+		input, err := os.Open(planInput)
 		if err != nil {
 			return fmt.Errorf("failed to open plan file: %w", err)
 		}

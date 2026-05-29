@@ -114,10 +114,11 @@ func NewHostFlag(params ...string) *cli.StringFlag {
 		Value: "app.terraform.io",
 	}
 
-	if len(params) == 2 {
-		hostFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], hostFlag)
+	if len(params) < 2 {
+		return hostFlag
 	}
 
+	hostFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], hostFlag)
 	return hostFlag
 }
 
@@ -139,10 +140,12 @@ func NewOrgFlag(params ...string) *cli.StringFlag {
 	// state commands, such as mq. For state commands, such as sq, we don't want
 	// to infer a value and instead derive it from the .terraform/
 	// terraform.tfstate.
-	if len(params) == 2 {
-		orgFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], orgFlag)
+
+	if len(params) < 2 {
+		return orgFlag
 	}
 
+	orgFlag = NameSpacedValueChainFlagFromConfigFile(params[0], params[1], orgFlag)
 	return orgFlag
 }
 

@@ -775,8 +775,8 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 			},
 		},
 		{
-			name:   "raw with json-into writes object document",
-			output: "raw",
+			name:     "raw with json-into writes object document",
+			output:   "raw",
 			rawInput: `{"data":{"id":"one","kind":"widget"}}`,
 			jsonInto: filepath.Join(
 				t.TempDir(),
@@ -797,8 +797,8 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 			},
 		},
 		{
-			name:   "raw with yaml-into writes object document",
-			output: "raw",
+			name:     "raw with yaml-into writes object document",
+			output:   "raw",
 			rawInput: `{"data":{"id":"one","kind":"widget"}}`,
 			yamlInto: filepath.Join(
 				t.TempDir(),

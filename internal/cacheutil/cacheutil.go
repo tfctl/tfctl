@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,8 +17,9 @@ import (
 	"github.com/tfctl/tfctl/internal/log"
 )
 
-// Entry represents a cached artifact on disk.
-// Key is the clear-text key; EncodedKey is the hashed filename.
+// Entry describes a cached artifact we keep on disk.
+// We use Key for the clear-text lookup value and EncodedKey for the hashed
+// filename.
 type Entry struct {
 	Key        string
 	EncodedKey string
@@ -25,11 +27,14 @@ type Entry struct {
 	Data       []byte
 }
 
-// Dir resolves the base cache directory. Precedence:
+// Dir resolves the base cache directory we use for cache entries.  We first
+// honor TFCTL_CACHE_DIR, and then we fall back to the user cache directory.
+// Precedence:
 //  1. TFCTL_CACHE_DIR, if set and non-empty
 //  2. os.UserCacheDir()/tfctl
 //
-// Returns ("", false) if a base cannot be resolved (treat as disabled).
+// Returns ("", false) if we cannot resolve a base path, which we treat as
+// disabled.
 func Dir() (string, bool) {
 	if c, ok := os.LookupEnv("TFCTL_CACHE_DIR"); ok && c != "" {
 		return c, true
@@ -40,7 +45,7 @@ func Dir() (string, bool) {
 	return "", false
 }
 
-// Enabled returns true unless TFCTL_CACHE explicitly disables it ("0"/"false").
+// Enabled reports whether we should use the cache at all.
 func Enabled() bool {
 	env, _ := os.LookupEnv("TFCTL_CACHE")
 	if env != "" {
@@ -52,9 +57,9 @@ func Enabled() bool {
 	return cfg
 }
 
-// EnsureBaseDir creates the base cache directory if caching is enabled and
-// a base path can be resolved. Returns the path, whether it is usable, and an
-// error if creation failed.
+// EnsureBaseDir creates the cache base directory when caching is enabled and
+// we can resolve a usable path.  It returns the path, whether we can use it,
+// and any creation error we hit.
 func EnsureBaseDir() (string, bool, error) {
 	if !Enabled() {
 		return "", false, nil
@@ -72,9 +77,9 @@ func EnsureBaseDir() (string, bool, error) {
 	return base, true, nil
 }
 
-// EntryPath returns the absolute path where a cache entry would live given
-// subdirectory components and the clear-text key. It also returns true if a
-// file currently exists at that path.
+// EntryPath resolves where we would store a cache entry for the supplied
+// subdirectories and clear-text key.  We also report whether a file already
+// exists at that path.
 func EntryPath(subdirs []string, clearKey string) (string, bool) {
 	base, ok := Dir()
 	if !ok {
@@ -88,9 +93,8 @@ func EntryPath(subdirs []string, clearKey string) (string, bool) {
 	return p, false
 }
 
-// Purge removes files older than the provided number of hours.
-// If hours <= 0 or the cache dir cannot be resolved, it is a no-op.  Empty
-// directories are removed regardless of age.
+// Purge removes stale cache files and then clears out empty directories.
+// If hours <= 0 or we cannot resolve the cache root, we leave everything alone.
 func Purge(hours int) error {
 	if hours <= 0 {
 		log.Debug("cache cleaning disabled")
@@ -102,12 +106,16 @@ func Purge(hours int) error {
 		return nil
 	}
 
-	// First walk the entire tree and remove stale files.
+	root, err := os.OpenRoot(base)
+	if err != nil {
+		return fmt.Errorf("failed to open cache root: %w", err)
+	}
+	defer root.Close()
+
 	maxAge := time.Duration(hours) * time.Hour
-	if err := filepath.Walk(base, func(path string, info os.FileInfo, walkErr error) error {
-		// Guard against nil info (can occur if the file disappeared). This is an
-		// unlikely edge case and has only happened when multiple Jenkins runs were
-		// misconfigured and coincidently colllided on the cache entries.
+	// We walk the tree once to evict stale files without re-traversing after each
+	// delete.
+	if err := filepath.WalkDir(base, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
 				return nil
@@ -115,39 +123,63 @@ func Purge(hours int) error {
 			return walkErr
 		}
 
-		if info == nil {
+		rel, err := filepath.Rel(base, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			// We keep the root itself and only act on entries beneath it.
 			return nil
 		}
 
-		if !info.IsDir() && time.Since(info.ModTime()) > maxAge {
-			if err := os.Remove(path); err == nil {
-				log.Debugf("removed cache file %s", path)
-			} else {
-				log.WithError(err).Warnf("failed to remove cache file %s", path)
+		if !d.IsDir() {
+			// We ask the entry for its metadata here so we can compare age before we
+			// remove it through the root handle.
+			info, err := d.Info()
+			if err != nil {
+				if os.IsNotExist(err) {
+					return nil
+				}
+				return err
+			}
+
+			if time.Since(info.ModTime()) > maxAge {
+				relPath := filepath.ToSlash(rel)
+				// Root.Remove wants a path relative to the opened root, so we normalize
+				// the separator before we call into it.
+				if err := root.Remove(relPath); err == nil {
+					log.Debugf("removed cache file %s", path)
+				} else {
+					log.WithError(err).Warnf("failed to remove cache file %s", path)
+				}
 			}
 		}
+
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to purge cache: %w", err)
 	}
 
-	// Second, walk back through the tree and remove empty directories. The first
-	// step is to collect all the directories which puts them shallowest to
-	// deepest.  And then iterate backwards through that, removing each one that
-	// is empty.
+	// We collect directories first so we can remove them from deepest to
+	// shallowest after the files are gone.
 	var dirs []string
-	if err := filepath.Walk(base, func(path string, info os.FileInfo, walkErr error) error {
+	if err := filepath.WalkDir(base, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
 				return nil
 			}
 			return walkErr
 		}
-		if info == nil {
-			return nil
-		}
-		if info.IsDir() {
-			dirs = append(dirs, path)
+
+		if d.IsDir() {
+			rel, err := filepath.Rel(base, path)
+			if err != nil {
+				return err
+			}
+			if rel != "." {
+				// We store relative slash paths so Root.Remove can consume them later.
+				dirs = append(dirs, filepath.ToSlash(rel))
+			}
 		}
 
 		return nil
@@ -155,19 +187,21 @@ func Purge(hours int) error {
 		return fmt.Errorf("failed to collect cache directories: %w", err)
 	}
 
-	// Now kill them if empty.
+	// We iterate backwards so each child directory disappears before its parent.
 	for i := len(dirs) - 1; i >= 0; i-- {
-		dir := dirs[i]
-		entries, err := os.ReadDir(dir)
+		relDir := dirs[i]
+		absDir := filepath.Join(base, filepath.FromSlash(relDir))
+		entries, err := os.ReadDir(absDir)
 		if err != nil {
-			log.WithError(err).Warnf("failed to read cache directory %s", dir)
+			log.WithError(err).Warnf("failed to read cache directory %s", absDir)
 			continue
 		}
 		if len(entries) == 0 {
-			if err := os.Remove(dir); err == nil {
-				log.Debugf("removed empty cache directory %s", dir)
+			// We only remove directories that stayed empty after the file sweep.
+			if err := root.Remove(relDir); err == nil {
+				log.Debugf("removed empty cache directory %s", absDir)
 			} else {
-				log.WithError(err).Warnf("failed to remove empty cache directory %s", dir)
+				log.WithError(err).Warnf("failed to remove empty cache directory %s", absDir)
 			}
 		}
 	}
@@ -175,7 +209,7 @@ func Purge(hours int) error {
 	return nil
 }
 
-// Read attempts to read a cached entry.
+// Read attempts to load a cached entry and trim any stray surrounding space.
 func Read(subdirs []string, clearKey string) (*Entry, bool) {
 	if !Enabled() {
 		return nil, false
@@ -190,6 +224,8 @@ func Read(subdirs []string, clearKey string) (*Entry, bool) {
 	}
 	b = bytes.TrimSpace(b)
 	encoded := encodeKey(clearKey)
+	// We log the hit after the file read succeeds so the key is the only detail
+	// we expose here.
 	log.Debugf("cache hit: key=%s", clearKey)
 	return &Entry{
 		Key:        clearKey,
@@ -199,29 +235,35 @@ func Read(subdirs []string, clearKey string) (*Entry, bool) {
 	}, true
 }
 
-// Write stores data for the given key beneath subdirs. Creates directories as needed.
+// Write stores data for the given key beneath subdirs.  We create the
+// directories first and then write the payload into the hashed filename.
 func Write(subdirs []string, clearKey string, data []byte) error {
 	if !Enabled() {
-		return nil // treat as disabled.
+		return nil
 	}
 	base, ok := Dir()
 	if !ok {
-		return nil // treat as disabled.
+		return nil
 	}
 	encoded := encodeKey(clearKey)
 	dir := filepath.Join(append([]string{base}, subdirs...)...)
+	// We build the directory tree lazily so cache misses do not need any upfront
+	// setup work.
 	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:mnd // Standard directory permissions
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 	p := filepath.Join(dir, encoded)
+	// We keep cached payloads owner-readable and owner-writable only.
 	if err := os.WriteFile(p, data, os.FileMode(0o600)); err != nil { //nolint:mnd // Standard file permissions (owner read/write only)
 		return fmt.Errorf("failed to write to cache: %w", err)
 	}
+	// We log the key instead of the path because the encoded filename is just an
+	// implementation detail.
 	log.Debugf("cache write: key=%s", clearKey)
 	return nil
 }
 
-// sha256 returns a 32-byte digest.
+// encodeKey turns the clear-text key into the stable filename we use on disk.
 func encodeKey(input string) string {
 	h := sha256.New()
 	h.Write([]byte(input))

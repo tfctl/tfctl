@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
@@ -92,7 +93,8 @@ func main() {
 		version = os.Args[2]
 	}
 
-	data, _ := os.ReadFile(docs + "/templates/docs-tfctl.yaml")
+	file := filepath.Join(docs, "templates", "docs-tfctl.yaml")
+	data, _ := os.ReadFile(filepath.Clean(file))
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		panic(err)
