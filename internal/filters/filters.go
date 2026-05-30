@@ -22,14 +22,14 @@ import (
 // operator, and target components. It matches an optional leading underscore
 // (indicating server-side filter), followed by a key, and optionally an
 // operator (with optional negation) and target. Operators are one of
-// = ^ ~ < > @ or /, optionally prefixed with '!'. Examples:
+// = ^ ~ < > @ / or ?, optionally prefixed with '!'. Examples:
 // "name" (key only), "name=value" (key + operator + target),
-// "name=" (key + operator, no target), "_tags=prod" (server-side key +
-// operator + target).
-var filterRegex = regexp.MustCompile(`^(_)?([^!?=^~<>@/]*)(!?[=^~<>@/])?(.*)$`)
+// "name=" (key + operator, no target), "name?" (exists), "name!?"
+// (missing), "_tags=prod" (server-side key + operator + target).
+var filterRegex = regexp.MustCompile(`^(_)?([^!?=^~<>@/]*)(!?[=^~<>@/?])?(.*)$`)
 
-// Filter is a single parsed --filter expression including the key, operand,
-// optional negation, server-side flag and value to match against.
+// Filter is a single parsed --filter expression including the key, operator
+// token, optional negation, server-side flag, and value to match against.
 type Filter struct {
 	// Filter criteria
 	Key     string `yaml:"key" json:"Key"`
@@ -42,7 +42,7 @@ type Filter struct {
 }
 
 // BuildFilters parses a filter specification string into a slice of Filter.
-// Invalid specs (unsupported operand or malformed expression) are skipped.
+// Invalid specs (unsupported operator or malformed expression) are skipped.
 func BuildFilters(spec string) []Filter {
 	//nolint:prealloc // Don't prealloc because we don't know what len will be and performance is not critical
 	var filters []Filter
@@ -82,7 +82,7 @@ func BuildFilters(spec string) []Filter {
 
 		serverSide := parts[1] == "_"
 		key := strings.TrimSpace(parts[2])
-		operand := parts[3]
+		operator := parts[3]
 		target := parts[4]
 
 		// If key is empty, skip this filter.
@@ -92,9 +92,9 @@ func BuildFilters(spec string) []Filter {
 		}
 
 		// Handle operator negation.
-		negate := strings.HasPrefix(operand, "!")
+		negate := strings.HasPrefix(operator, "!")
 		if negate {
-			operand = strings.TrimPrefix(operand, "!")
+			operator = strings.TrimPrefix(operator, "!")
 		}
 
 		// We've got a valid filter, append it to the result set.
@@ -102,7 +102,7 @@ func BuildFilters(spec string) []Filter {
 			Key:        key,
 			ServerSide: serverSide,
 			Negate:     negate,
-			Operand:    operand,
+			Operand:    operator,
 			Value:      target,
 		})
 	}
@@ -182,17 +182,32 @@ func applyFilters(candidate gjson.Result, attrs attrs.AttrList,
 		}
 
 		// If an attribute matching the filter key was not found, log the condition
-		// and skip this filter (continue processing other filters).
-		// This allows invalid filters to be reported without rejecting the entire row.
+		// and skip this filter (continue processing other filters). This allows
+		// invalid filters to be reported without rejecting the entire row.
 		if key == "" {
-			msg := fmt.Sprintf("filter key not found: %s", filter.Key)
+			msg := fmt.Sprintf("filter key not found in output: %s. (ignored)", filter.Key)
 			log.Error(msg)
-			fmt.Fprintf(os.Stderr, "warning: %s\n", msg)
 			continue
 		}
 
-		// Get the value from the candidate for the key. If it's nil, fail early.
+		// Get the value from the candidate for the key.
 		value := driller.Driller(candidate.Raw, key).Value()
+
+		// For unary existence checks, there is no value, so we don't evaluate any.
+		if filter.Operand == "?" {
+			exists := value != nil && value != ""
+			if filter.Negate {
+				exists = !exists
+			}
+
+			if !exists {
+				return false
+			}
+
+			continue
+		}
+
+		// All non-unary operators require a value to compare.
 		if value == nil {
 			return false
 		}
@@ -218,7 +233,7 @@ func applyFilters(candidate gjson.Result, attrs attrs.AttrList,
 	return true
 }
 
-// hungarianCheckType represents the type of filter operand.
+// hungarianCheckType represents the Hungarian filter match outcome.
 type hungarianCheckType int
 
 const (
@@ -226,7 +241,7 @@ const (
 	hungarianFail
 )
 
-// checkContainsOperand evaluates a membership style filter (operand '@')
+// checkContainsOperand evaluates a membership style filter (operator '@')
 // against slice or map values.
 func checkContainsOperand(value interface{}, filter Filter) bool {
 	switch val := value.(type) {
@@ -250,7 +265,7 @@ func checkContainsOperand(value interface{}, filter Filter) bool {
 }
 
 // checkNumericOperand compares a numeric value against the filter value using
-// numeric semantics. Supported operands: =, >, < and the negated form via
+// numeric semantics. Supported operators: =, >, < and the negated form via
 // filter.Negate (e.g., != is represented as Negate + "=").
 func checkNumericOperand(value float64, filter Filter) bool {
 	// Parse the value as a float64
@@ -268,13 +283,13 @@ func checkNumericOperand(value float64, filter Filter) bool {
 	case "<":
 		return (value < tgt) == !filter.Negate
 	default:
-		log.Error("unsupported numeric operand: " + filter.Operand)
+		log.Error("unsupported numeric operator: " + filter.Operand)
 		return false
 	}
 }
 
 // checkStringOperand evaluates a string comparison style filter against the
-// provided value using the operand semantics.
+// provided value using the operator semantics.
 func checkStringOperand(value string, filter Filter) bool {
 	switch filter.Operand {
 	case "=":
@@ -297,7 +312,7 @@ func checkStringOperand(value string, filter Filter) bool {
 		}
 		return matched == !filter.Negate
 	default:
-		log.Error("unsupported filtering operand: " + filter.Operand)
+		log.Error("unsupported filtering operator: " + filter.Operand)
 		return false
 	}
 }

@@ -4,6 +4,8 @@
 
 ### Added
 
+- `--filter` now includes existence `?` operator.
+
 ### Chores
 
 - Copyright text in release template now de-emphasized.

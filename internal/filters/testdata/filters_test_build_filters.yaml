@@ -160,3 +160,23 @@
       value: ""
       negate: false
   wantCount: 1
+
+- name: exists_unary_operator
+  spec: "name?"
+  delimiter: ""
+  want:
+    - key: "name"
+      operand: "?"
+      value: ""
+      negate: false
+  wantCount: 1
+
+- name: missing_unary_operator
+  spec: "description!?"
+  delimiter: ""
+  want:
+    - key: "description"
+      operand: "?"
+      value: ""
+      negate: true
+  wantCount: 1

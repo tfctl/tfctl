@@ -106,3 +106,84 @@
       value: "prod"
       negate: false
   want: true
+
+  # Pass when value exists.
+- name: exists_operator_true
+  filters:
+    - key: "name"
+      negate: false
+      operand: "?"
+      value: ""
+  want: true
+
+  # Pass when value does not exist.
+- name: exists_operator_false_for_null
+  filters:
+    - key: "description"
+      negate: false
+      operand: "?"
+      value: ""
+  want: false
+
+  # Pass when value does not exist (NEGATED).
+- name: missing_operator_true_for_null
+  filters:
+    - key: "description"
+      negate: true
+      operand: "?"
+      value: ""
+  want: true
+
+  # Pass when value does not exist (NEGATED).
+- name: missing_operator_false_for_present
+  filters:
+    - key: "name"
+      negate: true
+      operand: "?"
+      value: ""
+  want: false
+
+  # Pass when value does not exist (empty string).
+- name: exists_operator_false_for_empty_string
+  filters:
+    - key: "region"
+      negate: false
+      operand: "?"
+      value: ""
+  want: false
+
+  # Pass when value does not exist (empty string, NEGATED).
+- name: missing_operator_true_for_empty_string
+  filters:
+    - key: "region"
+      negate: true
+      operand: "?"
+      value: ""
+  want: true
+
+  # Pass when key doesn't exist in attrs.
+- name: missing_operator_true_for_missing_attr
+  filters:
+    - key: "id"
+      negate: true
+      operand: "?"
+      value: ""
+  want: true
+
+  # Pass when nested child exists.
+- name: exists_operator_true_for_nested_child
+  filters:
+    - key: "nested.inner"
+      negate: false
+      operand: "?"
+      value: ""
+  want: true
+
+  # Pass when nested child does not exist.
+- name: exists_operator_false_for_nested_missing
+  filters:
+    - key: "nested.does_not_exist"
+      negate: false
+      operand: "?"
+      value: ""
+  want: false

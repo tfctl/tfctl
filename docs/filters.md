@@ -4,13 +4,15 @@ The `--filter` flag narrows query results using a small, expressive syntax. This
 
 ## Overview
 
-- The default delimiter between multiple filters is a comma (`,`).
-- You can override the delimiter by setting the environment variable `TFCTL_FILTER_DELIM`.
-- Each filter has the form: `key<operand>target` where `<operand>` is one of the supported operators described below.
-- Prefixing an operand with `!` negates the operator (for example `name!@prod` means "name does NOT contain 'prod'").
+- The default delimiter between multiple filters is a comma (`,`). You can override the delimiter by setting the environment variable `TFCTL_FILTER_DELIM`.
+- Each filter has the form `key<operator>value` for binary filters, or
+  `key?` / `key!?` for existence checks.
+- Prefixing an operator with `!` negates that operator (for example
+  `name!@prod` means "name does NOT contain 'prod'").
+- The `key` is the key as it exists in the output. For example, if the filter is `--filter "name@prod"`, there must be an attribute in the output called `name`. If that attribute is not included as one of the defaults, it must be included via `--attrs`.
 - Filters referencing attribute keys that start with `_` are treated as server-side API filters and are ignored by the local filter engine.
 
-## Supported operands
+## Supported operators
 
 - `=`  : exact match (string equality)
 - `~`  : case-insensitive equality
@@ -19,8 +21,10 @@ The `--filter` flag narrows query results using a small, expressive syntax. This
 - `<`  : lexicographic less-than
 - `@`  : contains / membership (works for substrings and collections)
 - `/`  : regular expression match
+- `?`  : field exists (unary)
 
-Negation is expressed by placing `!` before the operand.
+Negation is expressed by placing `!` before the operator.
+For existence checks, `key!?` means field is missing.
 
 ## Special filters
 
@@ -36,12 +40,16 @@ If a target contains the delimiter character, quote the whole filter or choose a
 
 ## Behavior notes and edge cases
 
-- If a filter references an attribute name that doesn't exist in the discovered attribute list, the filter check will fail and an error will be logged.
+- If a filter references an attribute name that doesn't exist in the discovered attribute list, the filter check will fail, a warning will be displayed and the filter ignored.
 - For `@` (contains), the implementation supports strings, slices, and maps:
   - For strings it does a substring test.
   - For slices it tests for membership.
   - For maps it checks for a key.
 - For `/` (regex), the pattern uses Go's `regexp` package syntax. Invalid regular expressions will log an error and exclude the item from results.
+- For existence checks (`?` and `!?`), a field is considered **missing** if it meets any of these conditions:
+  - The field key does not exist in the resource.
+  - The field value is `null`.
+  - The field value is an empty string (`""`).
 - Filters are evaluated before attribute transformations are applied (so transformations in `--attrs` won't affect filter matching).
 - When using `sq` with `--concrete`, tfctl automatically appends `mode=managed` to the filter set.
 
@@ -88,6 +96,12 @@ tfctl mq --filter 'tags!@deprecated'
 # Combine different operators
 tfctl wq --filter 'name^prod,status=applied,!description='
 
+# Field exists
+tfctl wq --filter 'name?'
+
+# Field missing
+tfctl wq --filter 'description!?'
+
 # Find resources with Hungarian notation naming (sq only)
 tfctl sq --filter 'hungarian=true'
 
@@ -95,5 +109,5 @@ tfctl sq --filter 'hungarian=true'
 tfctl sq --filter 'hungarian=false'
 ```
 
-
-For implementation details, see the `FilterDataset` and `BuildFilters` functions in the project source (internal/output/filters.go).
+For implementation details, see the `FilterDataset` and `BuildFilters`
+functions in the project source (internal/filters/filters.go).

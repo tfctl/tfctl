@@ -172,7 +172,7 @@ func TestApplyFilters(t *testing.T) {
 		"id": "res-123",
 		"name": "my-resource",
 		"type": "aws_instance",
-		"region": "us-east-1",
+		"region": "",
 		"count": 5,
 		"tags": ["prod", "web"],
 		"metadata": {"env": "production"},
@@ -188,6 +188,8 @@ func TestApplyFilters(t *testing.T) {
 		{Key: "count", OutputKey: "count", Include: true},
 		{Key: "description", OutputKey: "description", Include: true},
 		{Key: "nested", OutputKey: "nested", Include: true},
+		{Key: "nested.inner", OutputKey: "nested.inner", Include: true},
+		{Key: "nested.does_not_exist", OutputKey: "nested.does_not_exist", Include: true},
 	}
 
 	for _, tt := range tests {

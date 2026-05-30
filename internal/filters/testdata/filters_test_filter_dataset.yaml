@@ -30,3 +30,11 @@
   wantCount: 1
   wantNames:
     - aws-resource-1
+
+- name: exists_filter
+  spec: "name?"
+  wantCount: 3
+  wantNames:
+    - aws-resource-1
+    - gcp-resource
+    - aws-resource-2
