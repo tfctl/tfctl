@@ -119,7 +119,7 @@ shadow:
 static:
 	staticcheck ./...
 
-test: build
+test:
 	go test ./... --count 1 -v
 
 vet:
