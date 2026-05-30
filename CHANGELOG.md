@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+### Chores
+
+- Copyright text in release template now de-emphasized.
+
+
 ## v1.3.0 - 2026-05-29
 
 ### Added
