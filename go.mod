@@ -15,6 +15,7 @@ require (
 	github.com/hashicorp/go-tfe v1.106.0
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/jsonapi v1.5.0
+	github.com/itchyny/gojq v0.12.19
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.19.0
 	github.com/urfave/cli-altsrc/v3 v3.1.0
@@ -59,6 +60,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-slug v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
+	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect

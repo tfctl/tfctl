@@ -1,15 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## v1.4.0 - 2026-06-01
 
 ### Added
 
 - `--filter` now includes existence `?` operator.
+- `--jq` added to support [jq filter language](https://jqlang.org/manual/#basic-filters).
 
 ### Chores
 
 - Copyright text in release template now de-emphasized.
-
+- Lint cleanup.
 
 ## v1.3.0 - 2026-05-29
 

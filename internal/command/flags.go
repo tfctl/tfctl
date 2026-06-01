@@ -55,6 +55,10 @@ func NewGlobalFlags(params ...string) []cli.Flag {
 			Usage:   "comma-separated list of filters to apply to results",
 		},
 		&cli.StringFlag{
+			Name:  "jq",
+			Usage: "jq query string to apply to results",
+		},
+		&cli.StringFlag{
 			Name:  "json-into",
 			Usage: "secondary output path to write JSON output to",
 		},

@@ -24,6 +24,7 @@ import (
 	"github.com/tfctl/tfctl/internal/attrs"
 	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/filters"
+	"github.com/tfctl/tfctl/internal/jq"
 )
 
 // InterfaceToString converts supported primitive or composite values to a
@@ -170,8 +171,31 @@ func SliceDiceSpit(raw bytes.Buffer,
 	// Filter out the rows we don't want. Do it here so that the following
 	// processes are slightly more efficient since they'll be working on a smaller
 	// dataset.
-	filter := cmd.String("filter")
-	filteredDataset := filters.FilterDataset(fullDataset, attrs, filter)
+	filterSpec := cmd.String("filter")
+	jqSpec := cmd.String("jq")
+
+	if filterSpec != "" && jqSpec != "" {
+		msg := "flags --filter and --jq are mutually exclusive"
+		fmt.Fprintf(os.Stderr, "error: %s\n", msg)
+		log.Error(msg)
+		return
+	}
+
+	var filteredDataset []map[string]interface{}
+	if jqSpec != "" {
+		var err error
+		filteredDataset, err = jq.FilterDatasetJQ(fullDataset, attrs, jqSpec)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: invalid jq query: %v\n", err)
+			log.Errorf("SliceDiceSpit jq filter: %v", err)
+			return
+		}
+	} else {
+		// FilterDataset() will trapp the filterSpec == "" case and just return
+		// the full dataset transformed into a []map[string]interface{} with the
+		// specified attributes included.
+		filteredDataset = filters.FilterDataset(fullDataset, attrs, filterSpec)
+	}
 
 	// THINK Force a time transformation to occur for all attributes, even though
 	// many will not be a timestamp. One alternative would be to look at first row

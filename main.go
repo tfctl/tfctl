@@ -145,14 +145,21 @@ func processCommandArgs(args []string) []string {
 			args = injectExplicitSet(args)
 		}
 		args = deduplicateFlags(args)
-		args = expandFlagValuePresets(args, "--attrs", "-a", "attrs", ",")
+		args = expandFlagValuePresets(
+			args,
+			"--attrs",
+			"-a",
+			"presets.attrs",
+			",",
+		)
 		args = expandFlagValuePresets(
 			args,
 			"--filter",
 			"-f",
-			"filters",
+			"presets.filters",
 			filterDelimiter(),
 		)
+		args = expandFlagSingleValuePreset(args, "--jq", "", "presets.jq")
 
 		log.Debugf("args after set processing: args=%v", args)
 
@@ -162,6 +169,58 @@ func processCommandArgs(args []string) []string {
 
 		return args
 	}
+}
+
+// expandFlagSingleValuePreset expands @preset tokens for single-value flags
+// (for example --jq) using values from <configRoot>.<preset> in the loaded
+// config file.
+func expandFlagSingleValuePreset(args []string, longFlag string, shortFlag string,
+	configRoot string) []string {
+	if len(args) <= 2 {
+		return args
+	}
+
+	for i := 2; i < len(args); i++ {
+		arg := args[i]
+
+		switch {
+		case arg == longFlag || (shortFlag != "" && arg == shortFlag):
+			if i+1 < len(args) {
+				args[i+1] = expandSinglePresetValue(args[i+1], configRoot)
+				i++
+			}
+		case strings.HasPrefix(arg, longFlag+"="):
+			_, value, _ := strings.Cut(arg, "=")
+			args[i] = longFlag + "=" + expandSinglePresetValue(value, configRoot)
+		case shortFlag != "" && strings.HasPrefix(arg, shortFlag+"="):
+			_, value, _ := strings.Cut(arg, "=")
+			args[i] = shortFlag + "=" + expandSinglePresetValue(value, configRoot)
+		}
+	}
+
+	return args
+}
+
+// expandSinglePresetValue replaces a single @preset token using
+// <configRoot>.<preset> from the loaded config file.
+func expandSinglePresetValue(value string, configRoot string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" || !strings.HasPrefix(trimmed, "@") {
+		return value
+	}
+
+	presetName := strings.TrimPrefix(trimmed, "@")
+	if presetName == "" {
+		return value
+	}
+
+	key := configRoot + "." + presetName
+	presetValue, err := config.GetString(key)
+	if err != nil {
+		return value
+	}
+
+	return strings.TrimSpace(presetValue)
 }
 
 // expandFlagValuePresets expands @preset tokens in the value for a flag using
@@ -401,7 +460,7 @@ func shouldSkipExplicitSetToken(args []string, tokenIdx int) bool {
 	}
 
 	switch args[tokenIdx-1] {
-	case "--attrs", "-a", "--filter", "-f":
+	case "--attrs", "-a", "--filter", "-f", "--jq":
 		return true
 	default:
 		return false

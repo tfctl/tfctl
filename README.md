@@ -19,7 +19,7 @@
 
 **Fast Performance** - Built-in Go with concurrent operations and intelligent caching.
 
-**Flexible Output** - Filter, sort, and transform results as JSON, YAML, or formatted tables. Use that output to drive automation workflows.
+**Flexible Output** - Filter, sort, and transform results as JSON, YAML, or formatted tables. Use that output to drive automation workflows. jq-style querying is also available.
 
 **Secure** - Supports OpenTofu encrypted state files and multiple authentication methods.
 
@@ -37,6 +37,9 @@
 
 <a href="docs/asciinema/wq.gif" target="_blank" rel="noopener noreferrer">Workspace Query (svq)</a>
 
+<a href="docs/asciinema/filters.gif" target="_blank" rel="noopener noreferrer">Filter Language</a>
+
+<a href="docs/asciinema/queries.gif" target="_blank" rel="noopener noreferrer">jq Queries</a>
 
 ## Why tfctl?
 
@@ -114,7 +117,8 @@ tfctl module --color
 - **[Quick Start Tutorial](docs/quickstart.md)** - Detailed walkthrough with examples
 - **[Command Reference](docs/flags.md)** - Complete flag documentation
 - **[Attribute Guide](docs/attrs.md)** - Advanced filtering techniques
-- **[Filter Expressions](docs/filters.md)** - Query syntax reference
+- **[Filter Expressions](docs/filters.md)** - Filter syntax reference
+- **[jq Query Expressions](docs/jq.md)** - Query syntax reference
 - **[Configuration](docs/configuration.md)** - Configuration file and environment variables
 
 ## Roadmap
@@ -140,12 +144,11 @@ Contributions are welcome! Whether it's:
 
 ## AI Acknowledgment
 
-This project uses AI-assisted tools (mostly GitHub CoPilot w/Claude Opus and Gemini 3) selectively:
+This project uses AI-assisted tools (mostly GitHub CoPilot) selectively:
 
-- **AI-assisted** — The `si` command (not yet documented), test scaffolding, and most of the documentation were created with AI assistance and reviewed before inclusion.
+- **AI-assisted** — The `si` command experiment (not yet documented), test scaffolding, and most of the documentation were created with AI assistance and reviewed before inclusion.
 - **Routine refactoring** — AI tools assisted with lint corrections and minor optimizations.
-
- **All query command implementations (`oq`, `sq`, `wq`, etc.), and supporting code, were developed without AI assistance.**
+- **All query command implementations (`oq`, `sq`, `wq`, etc.), and supporting code, were developed without AI assistance.**
 
 ## Verify releases
 

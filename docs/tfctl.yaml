@@ -75,19 +75,39 @@ sq:
   example: --color --sort id
 
 #
-# ADDITIONAL CONFIGURATION
+# PRESETS
 #
 
-attrs:
-  # Global presets that can be used in any command's --attrs arguement.
-  # For example, with the configuration below, the command `tfctl sq --attrs
-  # set1` will effectively become `tfctl sq --attrs region,tags_all.layer`.
-  # Not that these presets are additive, so `tfctl sq --attrs "arn,@set1"` will
-  # become `tfctl sq --attrs arn,region,tags_all.layer`. Multiple presets can be
-  # used as well. For example, `tfctl sq --attrs "@set1,@set2"` will become
-  # `tfctl sq --attrs region,tags_all.layer,arn:ARN:u`.
-  set1: region,tags_all.layer
-  set2: arn:ARN:u
+presets:
+  attrs:
+    # Global presets that can be used in any command's --attrs arguement.
+    # For example, with the configuration below, the command `tfctl sq --attrs
+    # set1` will effectively become `tfctl sq --attrs region,tags_all.layer`.
+    # Not that these presets are additive, so `tfctl sq --attrs "arn,@set1"`
+    # will become `tfctl sq --attrs arn,region,tags_all.layer`. Multiple presets
+    # can be used as well. For example, `tfctl sq --attrs "@set1,@set2"` will
+    # become `tfctl sq --attrs region,tags_all.layer,arn:ARN:u`.
+    set1: region,tags_all.layer
+    set2: arn:ARN:u
+
+  filters:
+    # Global presets that can be used in any command's --filter arguement. For
+    # example, with the configuration below, the command `tfctl sq --filter
+    # set1` will effectively become `tfctl sq --filter region=us-west-2`.
+    # Multiple presets can be used as well. For example, `tfctl sq --filter
+    # "@set1,@set2"` will become `tfctl sq --filter region=us-west-2,
+    # tags_all.layer=prod`.
+    set1: region=us-east-12
+    set2: layer=myapp
+
+  jq:
+    query1: '.updated > "2025-06-01"'
+    query2: '.name | contains("cloud")'
+    lastyear: '((.updated // "")[0:10]) >= ((now - 365*24*60*60) | strftime("%Y-%m-%d"))'
+
+#
+# ADDITIONAL CONFIGURATION
+#
 
 cache:
   # Number of hours after which cached state file info is considered stale and

@@ -250,6 +250,9 @@ common:
     - id: json-into
       syntax: --json-into string
       description: secondary output path to write JSON output to.
+    - id: jq
+      syntax: --jq string
+      description: jq query string to apply to results.
     - id: local
       syntax: --local/--no-local
       description: Show timestamps in local time according to your OS.

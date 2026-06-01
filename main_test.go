@@ -291,6 +291,12 @@ func TestShouldSkipExplicitSetToken(t *testing.T) {
 			want:     true,
 		},
 		{
+			name:     "skip for jq flag",
+			args:     []string{"tfctl", "sq", "--jq", "@query1"},
+			tokenIdx: 3,
+			want:     true,
+		},
+		{
 			name:     "do not skip standalone explicit set",
 			args:     []string{"tfctl", "sq", "@full"},
 			tokenIdx: 2,
@@ -361,9 +367,11 @@ func TestExpandPresetSegments(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"attrs": map[string]interface{}{
-				"set1": "arn,name",
-				"set2": []interface{}{"created-at", "workspace"},
+			"presets": map[string]interface{}{
+				"attrs": map[string]interface{}{
+					"set1": "arn,name",
+					"set2": []interface{}{"created-at", "workspace"},
+				},
 			},
 		},
 	}
@@ -407,7 +415,7 @@ func TestExpandPresetSegments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := expandPresetSegments(tt.input, "attrs", ",")
+			got := expandPresetSegments(tt.input, "presets.attrs", ",")
 			if got != tt.want {
 				t.Errorf("expandPresetSegments(%q) = %q, want %q", tt.input, got, tt.want)
 			}
@@ -423,10 +431,12 @@ func TestExpandFlagValuePresets(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"attrs": map[string]interface{}{
-				"set1": "arn,name",
-				"set2": []interface{}{"created-at", "workspace"},
-				"set3": "workspace,",
+			"presets": map[string]interface{}{
+				"attrs": map[string]interface{}{
+					"set1": "arn,name",
+					"set2": []interface{}{"created-at", "workspace"},
+					"set3": "workspace,",
+				},
 			},
 		},
 	}
@@ -491,7 +501,7 @@ func TestExpandFlagValuePresets(t *testing.T) {
 				append([]string(nil), tt.args...),
 				"--attrs",
 				"-a",
-				"attrs",
+				"presets.attrs",
 				",",
 			)
 			if !reflect.DeepEqual(got, tt.want) {
@@ -509,9 +519,11 @@ func TestExpandFlagValuePresets_Filter(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"filters": map[string]interface{}{
-				"set1": "_organization@prod",
-				"set2": []interface{}{"_workspace@dev", "status@applied"},
+			"presets": map[string]interface{}{
+				"filters": map[string]interface{}{
+					"set1": "_organization@prod",
+					"set2": []interface{}{"_workspace@dev", "status@applied"},
+				},
 			},
 		},
 	}
@@ -559,7 +571,7 @@ func TestExpandFlagValuePresets_Filter(t *testing.T) {
 				append([]string(nil), tt.args...),
 				"--filter",
 				"-f",
-				"filters",
+				"presets.filters",
 				",",
 			)
 			if !reflect.DeepEqual(got, tt.want) {
@@ -579,8 +591,10 @@ func TestExpandFlagValuePresets_Filter_CustomDelimiter(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"filters": map[string]interface{}{
-				"set1": "status@applied",
+			"presets": map[string]interface{}{
+				"filters": map[string]interface{}{
+					"set1": "status@applied",
+				},
 			},
 		},
 	}
@@ -589,7 +603,7 @@ func TestExpandFlagValuePresets_Filter_CustomDelimiter(t *testing.T) {
 		[]string{"tfctl", "mq", "--filter", "name@prod|@set1"},
 		"--filter",
 		"-f",
-		"filters",
+		"presets.filters",
 		filterDelimiter(),
 	)
 	want := []string{"tfctl", "mq", "--filter", "name@prod|status@applied"}
@@ -607,8 +621,10 @@ func TestProcessCommandArgs_ExpandsAttrsPreset(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"attrs": map[string]interface{}{
-				"set1": "arn,name",
+			"presets": map[string]interface{}{
+				"attrs": map[string]interface{}{
+					"set1": "arn,name",
+				},
 			},
 		},
 	}
@@ -629,8 +645,10 @@ func TestProcessCommandArgs_ExpandsFilterPreset(t *testing.T) {
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"filters": map[string]interface{}{
-				"set1": "_organization@prod",
+			"presets": map[string]interface{}{
+				"filters": map[string]interface{}{
+					"set1": "_organization@prod",
+				},
 			},
 		},
 	}
@@ -651,11 +669,13 @@ func TestProcessCommandArgs_ExpandsAttrsAndFilterPresets_WithRootDir(t *testing.
 
 	config.Config = config.Type{
 		Data: map[string]interface{}{
-			"attrs": map[string]interface{}{
-				"set1": "region,layer",
-			},
-			"filters": map[string]interface{}{
-				"set2": "layer=myapp",
+			"presets": map[string]interface{}{
+				"attrs": map[string]interface{}{
+					"set1": "region,layer",
+				},
+				"filters": map[string]interface{}{
+					"set2": "layer=myapp",
+				},
 			},
 		},
 	}
@@ -677,5 +697,88 @@ func TestProcessCommandArgs_ExpandsAttrsAndFilterPresets_WithRootDir(t *testing.
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("processCommandArgs attrs+filter expansion got %v, want %v", got, want)
+	}
+}
+
+func TestExpandFlagSingleValuePreset(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"presets": map[string]interface{}{
+				"jq": map[string]interface{}{
+					"query1": `.updated > "2025-06-01"`,
+					"query2": `.name | contains("cloud")`,
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			name: "long flag with separate value",
+			args: []string{"tfctl", "wq", "--jq", "@query1"},
+			want: []string{"tfctl", "wq", "--jq", `.updated > "2025-06-01"`},
+		},
+		{
+			name: "long flag equals syntax",
+			args: []string{"tfctl", "wq", `--jq=@query2`},
+			want: []string{"tfctl", "wq", `--jq=.name | contains("cloud")`},
+		},
+		{
+			name: "non preset value unchanged",
+			args: []string{"tfctl", "wq", `--jq=.name | contains("cloud")`},
+			want: []string{"tfctl", "wq", `--jq=.name | contains("cloud")`},
+		},
+		{
+			name: "unknown preset unchanged",
+			args: []string{"tfctl", "wq", "--jq", "@unknown"},
+			want: []string{"tfctl", "wq", "--jq", "@unknown"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandFlagSingleValuePreset(
+				append([]string(nil), tt.args...),
+				"--jq",
+				"",
+				"presets.jq",
+			)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("expandFlagSingleValuePreset(%v) = %v, want %v", tt.args, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestProcessCommandArgs_ExpandsJQPreset(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"presets": map[string]interface{}{
+				"jq": map[string]interface{}{
+					"query1": `.updated > "2025-06-01"`,
+				},
+			},
+		},
+	}
+
+	got := processCommandArgs([]string{"tfctl", "wq", "--jq", "@query1"})
+	want := []string{"tfctl", "wq", "--jq", `.updated > "2025-06-01"`}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs jq expansion got %v, want %v", got, want)
 	}
 }

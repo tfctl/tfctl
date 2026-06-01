@@ -40,7 +40,8 @@ func evaluateFunction(expression string, stateData map[string]interface{}) strin
 	return formatCtyValue(result)
 }
 
-// preprocessTerraformAddresses finds terraform addresses in the expression and replaces them with their actual values
+// preprocessTerraformAddresses finds terraform addresses in the expression and
+// replaces them with their actual values
 func preprocessTerraformAddresses(expression string, stateData map[string]interface{}) string {
 	// This regex matches terraform addresses like:
 	// module.sample.aws_instance.web[0].arn
@@ -162,8 +163,9 @@ func buildFunctionMap() map[string]function.Function {
 	funcs["try"] = tryfunc.TryFunc
 	funcs["can"] = tryfunc.CanFunc
 
-	// Note: This approach is much more maintainable than the previous hard-coded list.
-	// To add new functions from stdlib, just add them to the appropriate category above.
+	// Note: This approach is much more maintainable than the previous hard-coded
+	// list. To add new functions from stdlib, just add them to the appropriate
+	// category above.
 	//
 	// For true dynamic discovery, we'd need:
 	// 1. The stdlib package to export a Functions() method (it doesn't)

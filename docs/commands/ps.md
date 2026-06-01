@@ -17,6 +17,7 @@ Show a summary of the given plan.
 |------| ------- |-------------|
 | --color/--no-color |  | Colorize text output. |
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
+| --jq string |  | jq query string to apply to results. |
 | --json-into string |  | secondary output path to write JSON output to. |
 | --local/--no-local |  | Show timestamps in local time according to your OS. |
 | --output/-o string |  | Output format (text (default), json, yaml, csv). [More info](#output)|

@@ -19,6 +19,7 @@ Query HCP/TFE modules.
 | --color/--no-color |  | Colorize text output. |
 | --filter/-f string |  | Comma-separated list of filters to apply to results |
 | --host/-h string | app.terraform.io | HCP/TFE host to use. Overrides the backend. |
+| --jq string |  | jq query string to apply to results. |
 | --json-into string |  | secondary output path to write JSON output to. |
 | --limit int | unlimited | Limit the result set to `int` results. |
 | --local/--no-local |  | Show timestamps in local time according to your OS. |

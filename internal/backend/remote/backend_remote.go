@@ -58,7 +58,8 @@ type BackendRemote struct {
 }
 
 // Sentinel errors for validation and unsupported cases. These enable callers to
-// detect specific conditions via errors.Is/As while keeping messages consistent.
+// detect specific conditions via errors.Is/As while keeping messages
+// consistent.
 var (
 	ErrTokenNotString                = errors.New("token is not a string")
 	ErrInvalidClientType             = errors.New("not a Cloud or Enterprise TFE server")
@@ -458,7 +459,8 @@ func (be *BackendRemote) StateVersions(augmenter ...func(context.Context, *cli.C
 		options.PageNumber++
 	}
 
-	// Enrich each item by fetching its full details with includes if --deep is enabled.
+	// Enrich each item by fetching its full details with includes if --deep is
+	// enabled.
 	if be.Cmd.Bool("deep") {
 		for i := range results {
 			ro := &tfe.StateVersionReadOptions{

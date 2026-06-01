@@ -2,6 +2,9 @@
 
 The `--filter` flag narrows query results using a small, expressive syntax. This page documents the syntax and gives examples.
 
+The `--jq` flag provides an alternate filtering mode using jq query syntax.
+It is experimental and cannot be combined with `--filter`.
+
 ## Overview
 
 - The default delimiter between multiple filters is a comma (`,`). You can override the delimiter by setting the environment variable `TFCTL_FILTER_DELIM`.
@@ -54,6 +57,27 @@ If a target contains the delimiter character, quote the whole filter or choose a
 - When using `sq` with `--concrete`, tfctl automatically appends `mode=managed` to the filter set.
 
 ## Examples
+
+**jq filtering (experimental):**
+```bash
+# Match a single value
+tfctl wq --jq '.name == "my-resource"'
+
+# Logical AND
+tfctl wq --jq '.name == "my-resource" and .id == "res-123"'
+
+# Logical OR
+tfctl wq --jq '.name == "my-resource" or .id == "res-123"'
+
+# Grouping
+tfctl wq --jq '(.name == "my-resource" and .id == "res-123") or .type == "aws_instance"'
+
+# Nested field checks
+tfctl wq --jq '.nested.inner != null and .nested.inner != ""'
+```
+
+`--jq` and `--filter` are mutually exclusive. If both are provided, tfctl
+returns an error.
 
 **Basic filtering:**
 ```bash

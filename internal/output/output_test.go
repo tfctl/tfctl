@@ -886,3 +886,63 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceDiceSpit_JQFilter(t *testing.T) {
+	raw := bytes.NewBufferString(`[
+		{"id":"1","name":"alpha"},
+		{"id":"2","name":"beta"}
+	]`)
+	jsonInto := filepath.Join(t.TempDir(), "out.json")
+
+	attrList := attrs.AttrList{
+		{Key: "id", OutputKey: "id", Include: true},
+		{Key: "name", OutputKey: "name", Include: true},
+	}
+
+	cmd := &cli.Command{
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "output", Value: "text"},
+			&cli.StringFlag{Name: "json-into", Value: jsonInto},
+			&cli.StringFlag{Name: "jq", Value: `.name == "alpha"`},
+		},
+		Metadata: map[string]interface{}{},
+	}
+
+	out := new(bytes.Buffer)
+	SliceDiceSpit(*raw, attrList, cmd, "", out, nil)
+
+	data, err := os.ReadFile(jsonInto)
+	require.NoError(t, err)
+
+	var got []map[string]interface{}
+	require.NoError(t, json.Unmarshal(data, &got))
+	require.Len(t, got, 1)
+	assert.Equal(t, "1", got[0]["id"])
+	assert.Equal(t, "alpha", got[0]["name"])
+}
+
+func TestSliceDiceSpit_FilterAndJQConflict(t *testing.T) {
+	raw := bytes.NewBufferString(`[
+		{"id":"1","name":"alpha"},
+		{"id":"2","name":"beta"}
+	]`)
+
+	attrList := attrs.AttrList{
+		{Key: "id", OutputKey: "id", Include: true},
+		{Key: "name", OutputKey: "name", Include: true},
+	}
+
+	cmd := &cli.Command{
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "output", Value: "json"},
+			&cli.StringFlag{Name: "filter", Value: "name=alpha"},
+			&cli.StringFlag{Name: "jq", Value: `.name == "alpha"`},
+		},
+		Metadata: map[string]interface{}{},
+	}
+
+	out := new(bytes.Buffer)
+	SliceDiceSpit(*raw, attrList, cmd, "", out, nil)
+
+	assert.Equal(t, "", out.String())
+}

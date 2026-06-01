@@ -3,5 +3,5 @@
 // no-cloc
 
 // Package attrs provides attribute selection and transformation utilities for
-// shaping output fields across commands.
+// transforming output fields across commands.
 package attrs

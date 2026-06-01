@@ -122,7 +122,8 @@ loop:
 // LoadStateData loads and optionally decrypts a state document from the
 // detected backend at the provided rootDir.
 func LoadStateData(ctx context.Context, cmd *cli.Command, rootDir string) (map[string]interface{}, error) {
-	// Check to make sure the target directory looks like it might be a legit TF workspace.
+	// Check to make sure the target directory looks like it might be a legit TF
+	// workspace.
 	tfConfigFile := fmt.Sprintf("%s/.terraform/terraform.tfstate", rootDir)
 	if _, err := os.Stat(tfConfigFile); err != nil {
 		return nil, fmt.Errorf("terraform config file not found: %s", tfConfigFile)

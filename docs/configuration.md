@@ -18,6 +18,10 @@ If the specified file is not found or cannot be parsed, tfctl will error.
 
 See [tfctl.yaml](tfctl.yaml) for a complete reference of all available configuration options, including command-specific settings and defaults.
 
+Preset references used by `--attrs`, `--filter`, and `--jq` are defined under
+the top-level `presets` key (`presets.attrs`, `presets.filters`,
+`presets.jq`).
+
 ## Environment Variable Overrides
 
 The following environment variables override configuration file settings at runtime:
