@@ -51,6 +51,7 @@ The editing workflow is iterative. You should cycle through these steps until th
 
 7. **Run tests**: Once `go_diagnostics` reports no errors (and ONLY once there are no errors), run the tests for the packages you have changed. You can do this with `go test [packagePath...]`. Don't run `go test ./...` unless the user explicitly requests it, as doing so may slow down the iteration loop.
 
-8. **Keep consistent comments**: Comments should always wrap at column 80.
+8. **Keep consistent comments**: Comments should always wrap at column 80. Always include just one space after a sentence ending character.
 
+9. **Cyclomatic complexity**: When simplifying cyclomatic complexity lint issues, always favor guard statements and early exists as opposed to introduction of helper functions.
 

@@ -27,7 +27,7 @@ type Entry struct {
 	Data       []byte
 }
 
-// Dir resolves the base cache directory we use for cache entries.  We first
+// ResolveCacheDir resolves the base cache directory we use for cache entries.  We first
 // honor TFCTL_CACHE_DIR, and then we fall back to the user cache directory.
 // Precedence:
 //  1. TFCTL_CACHE_DIR, if set and non-empty
@@ -35,7 +35,7 @@ type Entry struct {
 //
 // Returns ("", false) if we cannot resolve a base path, which we treat as
 // disabled.
-func Dir() (string, bool) {
+func ResolveCacheDir() (string, bool) {
 	if c, ok := os.LookupEnv("TFCTL_CACHE_DIR"); ok && c != "" {
 		return c, true
 	}
@@ -65,7 +65,7 @@ func EnsureBaseDir() (string, bool, error) {
 		return "", false, nil
 	}
 
-	base, ok := Dir()
+	base, ok := ResolveCacheDir()
 	if !ok {
 		return "", false, nil
 	}
@@ -81,7 +81,7 @@ func EnsureBaseDir() (string, bool, error) {
 // subdirectories and clear-text key.  We also report whether a file already
 // exists at that path.
 func EntryPath(subdirs []string, clearKey string) (string, bool) {
-	base, ok := Dir()
+	base, ok := ResolveCacheDir()
 	if !ok {
 		return "", false
 	}
@@ -96,12 +96,13 @@ func EntryPath(subdirs []string, clearKey string) (string, bool) {
 // Purge removes stale cache files and then clears out empty directories.
 // If hours <= 0 or we cannot resolve the cache root, we leave everything alone.
 func Purge(hours int) error {
+
 	if hours <= 0 {
 		log.Debug("cache cleaning disabled")
 		return nil
 	}
 
-	base, ok := Dir()
+	base, ok := ResolveCacheDir()
 	if !ok {
 		return nil
 	}
@@ -113,8 +114,8 @@ func Purge(hours int) error {
 	defer root.Close()
 
 	maxAge := time.Duration(hours) * time.Hour
-	// We walk the tree once to evict stale files without re-traversing after each
-	// delete.
+
+	// Walk the tree first to remove stale cache entry files.
 	if err := filepath.WalkDir(base, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
@@ -127,44 +128,47 @@ func Purge(hours int) error {
 		if err != nil {
 			return err
 		}
-		if rel == "." {
-			// We keep the root itself and only act on entries beneath it.
+
+		if rel == "." || d.IsDir() {
 			return nil
 		}
 
-		if !d.IsDir() {
-			// We ask the entry for its metadata here so we can compare age before we
-			// remove it through the root handle.
-			info, err := d.Info()
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
-				return err
+		// We ask the entry for its metadata here so we can compare age before we
+		// remove it through the root handle.
+		info, err := d.Info()
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
 			}
-
-			if time.Since(info.ModTime()) > maxAge {
-				relPath := filepath.ToSlash(rel)
-				// Root.Remove wants a path relative to the opened root, so we normalize
-				// the separator before we call into it.
-				if err := root.Remove(relPath); err == nil {
-					log.Debugf("removed cache file %s", path)
-				} else {
-					log.WithError(err).Warnf("failed to remove cache file %s", path)
-				}
-			}
+			return err
 		}
 
+		if time.Since(info.ModTime()) <= maxAge {
+			return nil
+		}
+
+		relPath := filepath.ToSlash(rel)
+		// Root.Remove wants a path relative to the opened root, so we normalize
+		// the separator before we call into it.
+		if err := root.Remove(relPath); err == nil {
+			log.WithError(err).Warnf("failed to remove cache file %s", path)
+			return nil
+		}
+
+		log.Debugf("removed cache file %s", path)
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to purge cache: %w", err)
 	}
 
-	// We collect directories first so we can remove them from deepest to
-	// shallowest after the files are gone.
+	// collect directories first so we can remove them from deepest to shallowest
+	// after the files are gone.
 	var dirs []string
 	if err := filepath.WalkDir(base, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
+			// This is being a little pedantic as the only way this should happen is
+			// if something kneecapped the entry after the WalkDir(). There's an
+			// awfully slim chance of that.
 			if os.IsNotExist(walkErr) {
 				return nil
 			}
@@ -187,7 +191,7 @@ func Purge(hours int) error {
 		return fmt.Errorf("failed to collect cache directories: %w", err)
 	}
 
-	// We iterate backwards so each child directory disappears before its parent.
+	// Iterate backwards so each child directory disappears before its parent.
 	for i := len(dirs) - 1; i >= 0; i-- {
 		relDir := dirs[i]
 		absDir := filepath.Join(base, filepath.FromSlash(relDir))
@@ -196,13 +200,16 @@ func Purge(hours int) error {
 			log.WithError(err).Warnf("failed to read cache directory %s", absDir)
 			continue
 		}
-		if len(entries) == 0 {
-			// We only remove directories that stayed empty after the file sweep.
-			if err := root.Remove(relDir); err == nil {
-				log.Debugf("removed empty cache directory %s", absDir)
-			} else {
-				log.WithError(err).Warnf("failed to remove empty cache directory %s", absDir)
-			}
+
+		if len(entries) != 0 {
+			continue
+		}
+
+		// We only remove directories that stayed empty after the file sweep.
+		if err := root.Remove(relDir); err == nil {
+			log.Debugf("removed empty cache directory %s", absDir)
+		} else {
+			log.WithError(err).Warnf("failed to remove empty cache directory %s", absDir)
 		}
 	}
 
@@ -241,7 +248,7 @@ func Write(subdirs []string, clearKey string, data []byte) error {
 	if !Enabled() {
 		return nil
 	}
-	base, ok := Dir()
+	base, ok := ResolveCacheDir()
 	if !ok {
 		return nil
 	}

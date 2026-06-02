@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Chores
+
+- Lint cleanup.
+
 ## v1.4.0 - 2026-06-01
 
 ### Added

@@ -33,20 +33,24 @@ func FriendlyTFE(err error, ctx ErrorContext) error {
 	case errors.Is(err, tfe.ErrUnauthorized):
 		// No need to append the original sentinel here (would read as "unauthorized").
 		return fmt.Errorf("%s on %s: authentication failed (401). Set %s or TF_TOKEN",
-			nonEmpty(ctx.Operation, "request"), host, hostEnvKey(ctx.Host))
+			nonEmpty(ctx.Operation, "request"), host, hostEnvKey(ctx.Host),
+		)
 
 	case errors.Is(err, tfe.ErrResourceNotFound):
 		if ctx.Workspace != "" {
 			return fmt.Errorf("%s: workspace %q not found in organization %q on %s (404)",
-				nonEmpty(ctx.Operation, "request"), ctx.Workspace, nonEmpty(ctx.Org, "<unknown>"), host)
+				nonEmpty(ctx.Operation, "request"), ctx.Workspace, nonEmpty(ctx.Org, "<unknown>"), host,
+			)
 		}
 		return fmt.Errorf("%s: organization %q not found on %s (404)",
-			nonEmpty(ctx.Operation, "request"), nonEmpty(ctx.Org, "<unknown>"), host)
+			nonEmpty(ctx.Operation, "request"), nonEmpty(ctx.Org, "<unknown>"), host,
+		)
 	}
 
 	// Unknown error: provide generic context and wrap
 	return fmt.Errorf("%s on %s for org=%q workspace=%q: %w",
-		nonEmpty(ctx.Operation, "request"), host, ctx.Org, ctx.Workspace, err)
+		nonEmpty(ctx.Operation, "request"), host, ctx.Org, ctx.Workspace, err,
+	)
 }
 
 func hostEnvKey(host string) string {

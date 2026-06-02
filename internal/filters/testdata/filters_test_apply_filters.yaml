@@ -6,7 +6,7 @@
 - name: single_filter_match
   filters:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "my-resource"
       negate: false
   want: true
@@ -14,7 +14,7 @@
 - name: single_filter_no_match
   filters:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "other"
       negate: false
   want: false
@@ -22,11 +22,11 @@
 - name: multiple_filters_all_match
   filters:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "my-resource"
       negate: false
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: false
   want: true
@@ -34,11 +34,11 @@
 - name: multiple_filters_one_fails
   filters:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "my-resource"
       negate: false
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "gcp_"
       negate: false
   want: false
@@ -46,7 +46,7 @@
 - name: server-side_filter_ignored
   filters:
     - key: "_serverside_filter"
-      operand: "="
+      operator: "="
       value: "value"
       negate: false
   want: true
@@ -54,7 +54,7 @@
 - name: missing_attribute_key_continues
   filters:
     - key: "nonexistent"
-      operand: "="
+      operator: "="
       value: "value"
       negate: false
   want: true
@@ -62,7 +62,7 @@
 - name: numeric_comparison
   filters:
     - key: "count"
-      operand: ">"
+      operator: ">"
       value: "3"
       negate: false
   want: true
@@ -70,7 +70,7 @@
 - name: missing_key_returns_nil
   filters:
     - key: "nonexistent_key"
-      operand: "="
+      operator: "="
       value: "value"
       negate: false
   want: true
@@ -78,7 +78,7 @@
 - name: null_value_filter_fails
   filters:
     - key: "description"
-      operand: "="
+      operator: "="
       value: "value"
       negate: false
   want: false
@@ -86,15 +86,15 @@
 - name: unsupported_type_with_equals_operator_passes
   filters:
     - key: "nested"
-      operand: "="
+      operator: "="
       value: "value"
       negate: false
   want: true
 
-- name: unsupported_type_with_contains_operator_uses_checkContainsOperand
+- name: unsupported_type_with_contains_operator_uses_checkContainsOperator
   filters:
     - key: "nested"
-      operand: "@"
+      operator: "@"
       value: "inner"
       negate: false
   want: true
@@ -102,7 +102,7 @@
 - name: array_type_with_equals_operator_passes
   filters:
     - key: "tags"
-      operand: "="
+      operator: "="
       value: "prod"
       negate: false
   want: true
@@ -112,7 +112,7 @@
   filters:
     - key: "name"
       negate: false
-      operand: "?"
+      operator: "?"
       value: ""
   want: true
 
@@ -121,7 +121,7 @@
   filters:
     - key: "description"
       negate: false
-      operand: "?"
+      operator: "?"
       value: ""
   want: false
 
@@ -130,7 +130,7 @@
   filters:
     - key: "description"
       negate: true
-      operand: "?"
+      operator: "?"
       value: ""
   want: true
 
@@ -139,7 +139,7 @@
   filters:
     - key: "name"
       negate: true
-      operand: "?"
+      operator: "?"
       value: ""
   want: false
 
@@ -148,7 +148,7 @@
   filters:
     - key: "region"
       negate: false
-      operand: "?"
+      operator: "?"
       value: ""
   want: false
 
@@ -157,7 +157,7 @@
   filters:
     - key: "region"
       negate: true
-      operand: "?"
+      operator: "?"
       value: ""
   want: true
 
@@ -166,7 +166,7 @@
   filters:
     - key: "id"
       negate: true
-      operand: "?"
+      operator: "?"
       value: ""
   want: true
 
@@ -175,7 +175,7 @@
   filters:
     - key: "nested.inner"
       negate: false
-      operand: "?"
+      operator: "?"
       value: ""
   want: true
 
@@ -184,6 +184,6 @@
   filters:
     - key: "nested.does_not_exist"
       negate: false
-      operand: "?"
+      operator: "?"
       value: ""
   want: false

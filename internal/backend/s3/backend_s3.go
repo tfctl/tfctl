@@ -29,6 +29,9 @@ import (
 	"github.com/tfctl/tfctl/internal/svutil"
 )
 
+// BackendS3 represents an S3-backed Terraform state backend configuration. It
+// contains the necessary fields to configure and authenticate with an S3
+// service.
 type BackendS3 struct {
 	// Runtime context
 	Cmd *cli.Command

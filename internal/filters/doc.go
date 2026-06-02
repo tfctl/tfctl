@@ -35,9 +35,9 @@
 // Filter Parsing:
 //
 // The BuildFilters function parses a comma-delimited (or custom-delimited) filter
-// specification string. Invalid specifications (unsupported operands or malformed
-// expressions) are logged as warnings and skipped, allowing partial filter sets
-// to be processed.
+// specification string. Invalid specifications (unsupported operators or
+// malformed expressions) are logged as warnings and skipped, allowing partial
+// filter sets to be processed.
 //
 // Filter Application:
 //

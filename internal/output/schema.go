@@ -70,7 +70,7 @@ attrs help in the documentation or man tfctl-attrs.`)
 
 // dumpSchemaWalker recursively walks a struct type discovering jsonapi tags.
 func dumpSchemaWalker(holder string, typ reflect.Type, depth int) []schemaTag {
-	tags := make([]schemaTag, 0)
+	tags := []schemaTag{}
 
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
@@ -94,7 +94,7 @@ func dumpSchemaWalker(holder string, typ reflect.Type, depth int) []schemaTag {
 			switch field.Type.Kind() {
 			case reflect.Struct:
 				tags = append(tags, dumpSchemaWalker(tag.Name, field.Type, depth+1)...)
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if field.Type.Elem().Kind() == reflect.Struct {
 					holder := tag.Name
 					if tag.Kind == "relation" {

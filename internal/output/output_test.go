@@ -271,7 +271,7 @@ func TestDumpSchemaWalker(t *testing.T) {
 			prefix: "parent",
 			typ:    reflect.TypeOf(NestedStruct{}),
 			checkLen: func(tags []schemaTag) bool {
-				return len(tags) >= 1 // At least title
+				return len(tags) > 0 // At least title
 			},
 		},
 	}
@@ -309,7 +309,7 @@ func TestGetCommonFields(t *testing.T) {
 		{
 			name: "handles empty object",
 			json: `{}`,
-			want: map[string]interface{}{},
+			want: make(map[string]interface{}),
 		},
 	}
 
@@ -872,7 +872,7 @@ func TestSliceDiceSpit_IntoFileOutput(t *testing.T) {
 					&cli.StringFlag{Name: "json-into", Value: tt.jsonInto},
 					&cli.StringFlag{Name: "yaml-into", Value: tt.yamlInto},
 				},
-				Metadata: map[string]interface{}{},
+				Metadata: make(map[string]interface{}),
 			}
 
 			SliceDiceSpit(*raw, attrList, cmd, "", new(bytes.Buffer), nil)
@@ -905,7 +905,7 @@ func TestSliceDiceSpit_JQFilter(t *testing.T) {
 			&cli.StringFlag{Name: "json-into", Value: jsonInto},
 			&cli.StringFlag{Name: "jq", Value: `.name == "alpha"`},
 		},
-		Metadata: map[string]interface{}{},
+		Metadata: make(map[string]interface{}),
 	}
 
 	out := new(bytes.Buffer)
@@ -938,7 +938,7 @@ func TestSliceDiceSpit_FilterAndJQConflict(t *testing.T) {
 			&cli.StringFlag{Name: "filter", Value: "name=alpha"},
 			&cli.StringFlag{Name: "jq", Value: `.name == "alpha"`},
 		},
-		Metadata: map[string]interface{}{},
+		Metadata: make(map[string]interface{}),
 	}
 
 	out := new(bytes.Buffer)

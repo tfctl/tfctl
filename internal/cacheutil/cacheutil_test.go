@@ -19,7 +19,7 @@ func TestDir_WithTFCTL_CACHE_DIR(t *testing.T) {
 	customDir := t.TempDir()
 	t.Setenv("TFCTL_CACHE_DIR", customDir)
 
-	result, ok := Dir()
+	result, ok := ResolveCacheDir()
 
 	assert.True(t, ok)
 	assert.Equal(t, customDir, result)
@@ -31,7 +31,7 @@ func TestDir_WithEmptyTFCTL_CACHE_DIR(t *testing.T) {
 	t.Setenv("TFCTL_CACHE_DIR", "")
 	// Should fall back to os.UserCacheDir
 
-	result, ok := Dir()
+	result, ok := ResolveCacheDir()
 
 	// Result depends on system, but should not be empty string
 	if ok {
@@ -44,7 +44,7 @@ func TestDir_WithEmptyTFCTL_CACHE_DIR(t *testing.T) {
 func TestDir_WithoutTFCTL_CACHE_DIR(t *testing.T) {
 	t.Setenv("TFCTL_CACHE_DIR", "")
 
-	result, ok := Dir()
+	result, ok := ResolveCacheDir()
 
 	// Should use os.UserCacheDir if available
 	if ok {

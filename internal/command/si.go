@@ -340,7 +340,8 @@ func siCommandBuilder(meta meta.Meta) *cli.Command {
 				Value:       "0",
 				HideDefault: true,
 			},
-		}, NewGlobalFlags("si")...),
+		}, NewGlobalFlags("si")...,
+		),
 		Action: siCommandAction,
 	}
 }

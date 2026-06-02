@@ -221,8 +221,10 @@ func SliceDiceSpit(raw bytes.Buffer,
 
 	switch output {
 	case "json":
-		// We marshal the filtered dataset into a JSON document.
-		// TODO Figure out how to maintain key order in the JSON document.
+		// We marshal the filtered dataset into a JSON document. Note that the JSON
+		// key order will not match the order of the fields in filteredDataset since
+		// we're using maps to represent rows. The Go encoding/json package
+		// intentionally sorts the keys in the output.
 		jsonOutput, err := json.Marshal(filteredDataset)
 		if err != nil {
 			log.Errorf("SliceDiceSpit json marshal: %v", err)

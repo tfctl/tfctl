@@ -181,7 +181,8 @@ func sqCommandBuilder(meta meta.Meta) *cli.Command {
 			NewOrgFlag("sq"),
 			tldrFlag,
 			workspaceFlag,
-		}, NewGlobalFlags("sq")...),
+		}, NewGlobalFlags("sq")...,
+		),
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 			ResolveInverseFlags(cmd, meta.Args, []string{
 				"chop", "color", "local", "titles", "short",

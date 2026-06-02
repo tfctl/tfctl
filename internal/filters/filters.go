@@ -32,9 +32,9 @@ var filterRegex = regexp.MustCompile(`^(_)?([^!?=^~<>@/]*)(!?[=^~<>@/?])?(.*)$`)
 // token, optional negation, server-side flag, and value to match against.
 type Filter struct {
 	// Filter criteria
-	Key     string `yaml:"key" json:"Key"`
-	Operand string `yaml:"operand" json:"Operand"`
-	Value   string `yaml:"value" json:"Value"`
+	Key      string `yaml:"key" json:"Key"`
+	Operator string `yaml:"operator" json:"Operator"`
+	Value    string `yaml:"value" json:"Value"`
 
 	// Filter modifiers
 	Negate     bool `yaml:"negate" json:"Negate"`
@@ -102,7 +102,7 @@ func BuildFilters(spec string) []Filter {
 			Key:        key,
 			ServerSide: serverSide,
 			Negate:     negate,
-			Operand:    operator,
+			Operator:   operator,
 			Value:      target,
 		})
 	}
@@ -194,16 +194,14 @@ func applyFilters(candidate gjson.Result, attrs attrs.AttrList,
 		value := driller.Driller(candidate.Raw, key).Value()
 
 		// For unary existence checks, there is no value, so we don't evaluate any.
-		if filter.Operand == "?" {
+		if filter.Operator == "?" {
 			exists := value != nil && value != ""
-			if filter.Negate {
-				exists = !exists
-			}
-
-			if !exists {
+			// If a value exists but the filter is negated (e.g., "key!?"), then this
+			// filter should fail.
+			if exists == filter.Negate {
 				return false
 			}
-
+			// Otherwise, it passes and we keep on going.
 			continue
 		}
 
@@ -214,23 +212,45 @@ func applyFilters(candidate gjson.Result, attrs attrs.AttrList,
 
 		// Check the value against the filter. If it fails the check, fail early as
 		// there's no need to continue checking the remaining filters.
-		result := true
-		if v, ok := value.(string); ok {
-			result = checkStringOperand(v, filter)
-		} else if v, ok := value.(bool); ok {
-			result = checkStringOperand(fmt.Sprintf("%v", v), filter)
-		} else if num, ok := toFloat64(value); ok {
-			result = checkNumericOperand(num, filter)
-		} else if filter.Operand == "@" {
-			result = checkContainsOperand(value, filter)
-		}
-
-		if !result {
+		if !checkAllOperators(value, filter) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// checkAllOperators evaluates the filter against the provided value using the
+// appropriate operator check func.
+func checkAllOperators(value interface{}, filter Filter) bool {
+	// Try string comparison first.
+	if v, ok := value.(string); ok {
+		return checkStringOperand(v, filter)
+	}
+
+	// Try numeric comparison next. It's ok if this is not numeric and fails.
+	if num, ok := toFloat64(value); ok {
+		return checkNumericOperand(num, filter)
+	}
+
+	// Finally, if the operator is '@', we can check for membership in slices
+	// or maps.
+	if filter.Operator == "@" {
+		return checkContainsOperand(value, filter)
+	}
+
+	// The '=' operator would have already check in the checkXXXOperand() calls
+	// above. If we can't handle the type, treat '=' as a no-op filter. This
+	// preserves the behavior that unsupported types do not exclude rows when the
+	// user is requesting an equality match.
+	// THINK Do we really want to do this? Perhaps we should just fail if '='
+	// operator is used with an unsupported operand type?
+	if filter.Operator == "=" {
+		return true
+	}
+
+	log.Error(fmt.Sprintf("unsupported type for filtering: %T", value))
+	return false
 }
 
 // hungarianCheckType represents the Hungarian filter match outcome.
@@ -275,7 +295,7 @@ func checkNumericOperand(value float64, filter Filter) bool {
 		return false
 	}
 
-	switch filter.Operand {
+	switch filter.Operator {
 	case "=":
 		return (value == tgt) == !filter.Negate
 	case ">":
@@ -283,7 +303,7 @@ func checkNumericOperand(value float64, filter Filter) bool {
 	case "<":
 		return (value < tgt) == !filter.Negate
 	default:
-		log.Error("unsupported numeric operator: " + filter.Operand)
+		log.Error("unsupported numeric operator: " + filter.Operator)
 		return false
 	}
 }
@@ -291,7 +311,7 @@ func checkNumericOperand(value float64, filter Filter) bool {
 // checkStringOperand evaluates a string comparison style filter against the
 // provided value using the operator semantics.
 func checkStringOperand(value string, filter Filter) bool {
-	switch filter.Operand {
+	switch filter.Operator {
 	case "=":
 		return value == filter.Value == !filter.Negate
 	case "~":
@@ -312,7 +332,7 @@ func checkStringOperand(value string, filter Filter) bool {
 		}
 		return matched == !filter.Negate
 	default:
-		log.Error("unsupported filtering operator: " + filter.Operand)
+		log.Error("unsupported filtering operator: " + filter.Operator)
 		return false
 	}
 }

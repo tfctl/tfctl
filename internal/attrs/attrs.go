@@ -88,7 +88,7 @@ func (a *Attr) Transform(value interface{}) interface{} {
 		// Same logic as above re: case. This allows a more specific length
 		// transformation to override a global one.
 		match := re.FindAllString(a.TransformSpec, -1)
-		if len(match) != 0 {
+		if len(match) > 0 {
 			// Take the last (overriding) match.
 			l, _ := strconv.Atoi(match[len(match)-1])
 			abs := int(math.Abs(float64(l)))

@@ -39,7 +39,7 @@ func InitLogger() {
 	default:
 		apexLevel = log.ErrorLevel
 	}
-	log.SetHandler(&CustomHandler{})
+	log.SetHandler(new(CustomHandler))
 	log.SetLevel(apexLevel)
 }
 

@@ -26,7 +26,8 @@ func IsHungarian(typ string, name string) bool {
 	// Split the name by:
 	// 1. Non-alphanumeric separators (dashes, dots, underscores, etc.)
 	// 2. CamelCase boundaries (transition from lowercase to uppercase)
-	// First replace camelCase boundaries with a delimiter, then split by non-alphanumeric.
+	// First replace camelCase boundaries with a delimiter, then split by non-
+	// alphanumeric.
 	camelCaseRe := regexp.MustCompile(`([a-z])([A-Z])`)
 	nameWithDelim := camelCaseRe.ReplaceAllString(name, "${1}_${2}")
 

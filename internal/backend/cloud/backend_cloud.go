@@ -16,6 +16,10 @@ import (
 	"github.com/tfctl/tfctl/internal/config"
 )
 
+// BackendCloud represents a Terraform Cloud or Enterprise backend
+// configuration, which is a specific type of remote backend. It contains the
+// necessary fields to configure and authenticate with TFC/TFE, and provides a
+// method to transform itself into a BackendRemote for use by tfctl.
 type BackendCloud struct {
 	// Runtime context
 	Cmd *cli.Command

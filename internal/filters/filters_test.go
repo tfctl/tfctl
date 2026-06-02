@@ -28,27 +28,27 @@ type testBuildFiltersCase struct {
 	WantCount int      `yaml:"wantCount"`
 }
 
-// testCheckStringOperandCase represents a single test case for
-// TestCheckStringOperand.
-type testCheckStringOperandCase struct {
+// testCheckStringOperatorCase represents a single test case for
+// TestCheckStringOperator.
+type testCheckStringOperatorCase struct {
 	Name   string `yaml:"name"`
 	Value  string `yaml:"value"`
 	Filter Filter `yaml:"filter"`
 	Want   bool   `yaml:"want"`
 }
 
-// testCheckNumericOperandCase represents a single test case for
-// TestCheckNumericOperand.
-type testCheckNumericOperandCase struct {
+// testCheckNumericOperatorCase represents a single test case for
+// TestCheckNumericOperator.
+type testCheckNumericOperatorCase struct {
 	Name   string  `yaml:"name"`
 	Value  float64 `yaml:"value"`
 	Filter Filter  `yaml:"filter"`
 	Want   bool    `yaml:"want"`
 }
 
-// testCheckContainsOperandCase represents a single test case for
-// TestCheckContainsOperand.
-type testCheckContainsOperandCase struct {
+// testCheckContainsOperatorCase represents a single test case for
+// TestCheckContainsOperator.
+type testCheckContainsOperatorCase struct {
 	Name   string      `yaml:"name"`
 	Value  interface{} `yaml:"value"`
 	Filter Filter      `yaml:"filter"`
@@ -103,7 +103,7 @@ func TestBuildFilters(t *testing.T) {
 			if tt.Want != nil {
 				for i, filter := range tt.Want {
 					assert.Equal(t, filter.Key, got[i].Key)
-					assert.Equal(t, filter.Operand, got[i].Operand)
+					assert.Equal(t, filter.Operator, got[i].Operator)
 					assert.Equal(t, filter.Value, got[i].Value)
 					assert.Equal(t, filter.Negate, got[i].Negate)
 				}
@@ -112,9 +112,9 @@ func TestBuildFilters(t *testing.T) {
 	}
 }
 
-func TestCheckStringOperand(t *testing.T) {
-	var tests []testCheckStringOperandCase
-	require.NoError(t, loadTestData("filters_test_check_string_operand.yaml", &tests))
+func TestCheckStringOperator(t *testing.T) {
+	var tests []testCheckStringOperatorCase
+	require.NoError(t, loadTestData("filters_test_check_string_operator.yaml", &tests))
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -124,9 +124,9 @@ func TestCheckStringOperand(t *testing.T) {
 	}
 }
 
-func TestCheckNumericOperand(t *testing.T) {
-	var tests []testCheckNumericOperandCase
-	require.NoError(t, loadTestData("filters_test_check_numeric_operand.yaml", &tests))
+func TestCheckNumericOperator(t *testing.T) {
+	var tests []testCheckNumericOperatorCase
+	require.NoError(t, loadTestData("filters_test_check_numeric_operator.yaml", &tests))
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -136,9 +136,9 @@ func TestCheckNumericOperand(t *testing.T) {
 	}
 }
 
-func TestCheckContainsOperand(t *testing.T) {
-	var tests []testCheckContainsOperandCase
-	require.NoError(t, loadTestData("filters_test_check_contains_operand.yaml", &tests))
+func TestCheckContainsOperator(t *testing.T) {
+	var tests []testCheckContainsOperatorCase
+	require.NoError(t, loadTestData("filters_test_check_contains_operator.yaml", &tests))
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {

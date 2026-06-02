@@ -10,7 +10,7 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "my-resource"
       negate: false
   wantCount: 1
@@ -20,7 +20,7 @@
   delimiter: ""
   want:
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: false
   wantCount: 1
@@ -30,7 +30,7 @@
   delimiter: ""
   want:
     - key: "tags"
-      operand: "~"
+      operator: "~"
       value: "^env-"
       negate: false
   wantCount: 1
@@ -40,7 +40,7 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "test"
       negate: true
   wantCount: 1
@@ -50,7 +50,7 @@
   delimiter: ""
   want:
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: true
   wantCount: 1
@@ -60,11 +60,11 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "test"
       negate: false
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: false
   wantCount: 2
@@ -74,7 +74,7 @@
   delimiter: ""
   want:
     - key: "count"
-      operand: ">"
+      operator: ">"
       value: "5"
       negate: false
   wantCount: 1
@@ -84,27 +84,27 @@
   delimiter: ""
   want:
     - key: "count"
-      operand: "<"
+      operator: "<"
       value: "10"
       negate: false
   wantCount: 1
 
-- name: contains_operand
+- name: contains_operator
   spec: "name@test"
   delimiter: ""
   want:
     - key: "name"
-      operand: "@"
+      operator: "@"
       value: "test"
       negate: false
   wantCount: 1
 
-- name: regex_operand
+- name: regex_operator
   spec: "name/^test.*"
   delimiter: ""
   want:
     - key: "name"
-      operand: "/"
+      operator: "/"
       value: "^test.*"
       negate: false
   wantCount: 1
@@ -114,15 +114,15 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "test"
       negate: false
     - key: "status"
-      operand: ""
+      operator: ""
       value: ""
       negate: false
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: false
   wantCount: 3
@@ -132,11 +132,11 @@
   delimiter: "|"
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: "test"
       negate: false
     - key: "type"
-      operand: "^"
+      operator: "^"
       value: "aws_"
       negate: false
   wantCount: 2
@@ -146,7 +146,7 @@
   delimiter: ""
   want:
     - key: "backend.s3.region"
-      operand: "="
+      operator: "="
       value: "us-west-2"
       negate: false
   wantCount: 1
@@ -156,7 +156,7 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "="
+      operator: "="
       value: ""
       negate: false
   wantCount: 1
@@ -166,7 +166,7 @@
   delimiter: ""
   want:
     - key: "name"
-      operand: "?"
+      operator: "?"
       value: ""
       negate: false
   wantCount: 1
@@ -176,7 +176,7 @@
   delimiter: ""
   want:
     - key: "description"
-      operand: "?"
+      operator: "?"
       value: ""
       negate: true
   wantCount: 1

@@ -185,7 +185,7 @@ func TestNewS3_BasicConstruction(t *testing.T) {
 	client := NewS3(cfg)
 
 	assert.NotNil(t, client)
-	assert.IsType(t, &s3v2.Client{}, client)
+	assert.IsType(t, new(s3v2.Client), client)
 }
 
 // TestNewS3_WithS3EndpointResolver verifies that WithS3EndpointResolver
@@ -199,7 +199,7 @@ func TestNewS3_WithS3EndpointResolver(t *testing.T) {
 	client := NewS3(cfg)
 
 	assert.NotNil(t, client)
-	assert.IsType(t, &s3v2.Client{}, client)
+	assert.IsType(t, new(s3v2.Client), client)
 }
 
 // TestWithS3EndpointResolver verifies that WithS3EndpointResolver returns

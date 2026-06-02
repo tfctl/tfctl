@@ -23,6 +23,10 @@ import (
 	"github.com/tfctl/tfctl/internal/svutil"
 )
 
+// BackendRemote represents a remote Terraform backend configuration, which is
+// typically Terraform Cloud or Enterprise. It implements the Backend interface.
+// https://developer.hashicorp.com/terraform/language/backend/remote
+
 type BackendRemote struct {
 	// Runtime context
 	Cmd *cli.Command
@@ -309,7 +313,8 @@ func (be *BackendRemote) StateVersion(svSpecs ...string) (tfe.StateVersion, erro
 		if workspace.CurrentStateVersion == nil {
 			return tfe.StateVersion{},
 				fmt.Errorf("workspace %s has no current state version: %w",
-					workspace.ID, ErrNoCurrentStateVersion)
+					workspace.ID, ErrNoCurrentStateVersion,
+				)
 		}
 		svSpecs[0] = workspace.CurrentStateVersion.ID
 	} else if strings.HasPrefix(svSpecs[0], "CSV~") {

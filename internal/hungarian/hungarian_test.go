@@ -4,9 +4,7 @@
 
 package hungarian
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestIsHungarian(t *testing.T) {
 	tests := []struct {
@@ -303,7 +301,8 @@ func TestIsHungarian(t *testing.T) {
 			result := IsHungarian(tt.typ, tt.resName)
 			if result != tt.expected {
 				t.Errorf("IsHungarian(%q, %q) = %v, expected %v",
-					tt.typ, tt.resName, result, tt.expected)
+					tt.typ, tt.resName, result, tt.expected,
+				)
 			}
 		})
 	}
