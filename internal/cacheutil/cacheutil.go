@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/tfctl/tfctl/internal/config"
@@ -47,14 +48,22 @@ func ResolveCacheDir() (string, bool) {
 
 // Enabled reports whether we should use the cache at all.
 func Enabled() bool {
-	env, _ := os.LookupEnv("TFCTL_CACHE")
-	if env != "" {
-		return env == "1" || env == "true"
+	env, ok := os.LookupEnv("TFCTL_CACHE")
+	if ok && strings.TrimSpace(env) != "" {
+		switch strings.ToLower(strings.TrimSpace(env)) {
+		case "0", "false", "no", "off":
+			return false
+		default:
+			return true
+		}
 	}
 
-	cfg, _ := config.GetBool("cache.enabled", false)
+	cfg, err := config.GetBool("cache.enabled")
+	if err == nil {
+		return cfg
+	}
 
-	return cfg
+	return true
 }
 
 // EnsureBaseDir creates the cache base directory when caching is enabled and

@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/tfctl/tfctl/internal/config"
 )
 
 // TestDir_WithTFCTL_CACHE_DIR verifies Dir() respects TFCTL_CACHE_DIR
@@ -55,14 +57,32 @@ func TestDir_WithoutTFCTL_CACHE_DIR(t *testing.T) {
 
 // TestEnabled_Default verifies caching is enabled by default (no env var).
 func TestEnabled_Default(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{Data: map[string]interface{}{"dummy": true}}
 	t.Setenv("TFCTL_CACHE", "")
 
-	assert.False(t, Enabled())
+	assert.True(t, Enabled())
 }
 
-// TestEnabled_With_TFCTL_CACHE_Set verifies caching is disabled when
-// TFCTL_CACHE is any value other than "1" or "true".
-func TestDisabled_With_TFCTL_CACHE_Set(t *testing.T) {
+// TestEnabled_With_TFCTL_CACHE_Set verifies TFCTL_CACHE override semantics.
+func TestEnabled_With_TFCTL_CACHE_Set(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"cache": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+	}
+
 	tests := []struct {
 		name     string
 		value    string
@@ -70,10 +90,11 @@ func TestDisabled_With_TFCTL_CACHE_Set(t *testing.T) {
 	}{
 		{"1", "1", true},
 		{"true", "true", true},
-		{"yes", "yes", false},
-		{"empty string", "", false},
+		{"yes", "yes", true},
+		{"empty string falls back to config", "", false},
 		{"0", "0", false},
 		{"false", "false", false},
+		{"off", "off", false},
 	}
 
 	for _, tt := range tests {
@@ -82,6 +103,33 @@ func TestDisabled_With_TFCTL_CACHE_Set(t *testing.T) {
 			assert.Equal(t, tt.expected, Enabled())
 		})
 	}
+}
+
+func TestEnabled_WithConfigFallback(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	t.Setenv("TFCTL_CACHE", "")
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"cache": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+	}
+	assert.True(t, Enabled())
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"cache": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+	}
+	assert.False(t, Enabled())
 }
 
 // TestEnsureBaseDir_CachingDisabled verifies EnsureBaseDir returns empty
