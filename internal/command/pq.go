@@ -24,7 +24,6 @@ var pqDefaultAttrs = []string{".id", "name"}
 // projects for the selected organization, supports --tldr/--schema
 // short-circuit behavior, and emits output per common flags.
 func pqCommandAction(ctx context.Context, cmd *cli.Command) error {
-
 	config.Config.Namespace = "oq"
 
 	be, org, client, err := InitRemoteOrgQuery(ctx, cmd)
@@ -78,7 +77,6 @@ func pqServerSideFilterAugmenter(
 	cmd *cli.Command,
 	opts *tfe.ProjectListOptions,
 ) error {
-
 	// THINK Should we do this?
 	// Include tag info.
 	opts.Include = append(opts.Include, tfe.ProjectEffectiveTagBindings)

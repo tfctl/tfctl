@@ -148,7 +148,8 @@ func FilterDataset(candidates gjson.Result, attrs attrs.AttrList, spec string) [
 // provided filters. Server-side TF API filter keys (prefixed with _) are
 // ignored here.
 func applyFilters(candidate gjson.Result, attrs attrs.AttrList,
-	filters []Filter) bool {
+	filters []Filter,
+) bool {
 	// No filters, so go home early.
 	if len(filters) == 0 {
 		return true

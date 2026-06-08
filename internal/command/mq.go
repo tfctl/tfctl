@@ -87,7 +87,6 @@ func mqServerSideFilterAugmenter(
 					opts.RegistryName = tfe.PrivateRegistry
 				}
 			}
-
 		}
 	}
 

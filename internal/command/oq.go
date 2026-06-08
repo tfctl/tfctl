@@ -23,7 +23,6 @@ var oqDefaultAttrs = []string{"external-id:id", ".id:name"}
 // organizations from the configured host, supports --tldr/--schema
 // short-circuit behavior, and emits output per common flags.
 func oqCommandAction(ctx context.Context, cmd *cli.Command) error {
-
 	config.Config.Namespace = "oq"
 
 	be, err := remote.NewBackendRemote(ctx, cmd, remote.BuckNaked())

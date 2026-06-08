@@ -19,7 +19,6 @@ type BackendLocalOption = func(ctx context.Context, cmd *cli.Command, be *Backen
 
 func FromRootDir(rootDir string) BackendLocalOption {
 	return func(ctx context.Context, cmd *cli.Command, be *BackendLocal) error {
-
 		// Is rootDir a relative or absolute path?
 		if filepath.IsAbs(rootDir) {
 			be.RootDir = rootDir

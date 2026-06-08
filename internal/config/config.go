@@ -201,7 +201,8 @@ func Load(cfgFilePath ...string) (Type, error) {
 
 	Config = Type{
 		Source: path,
-		Data:   data}
+		Data:   data,
+	}
 
 	return Config, nil
 }

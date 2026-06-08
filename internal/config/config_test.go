@@ -537,7 +537,6 @@ func TestGetStringSlice_SimpleAndNested(t *testing.T) {
 		vals, err = GetStringSlice("not_a_list")
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"one"}, vals)
-
 	})
 }
 

@@ -314,7 +314,6 @@ func (be *BackendS3) StateVersions(augmenter ...func(context.Context, *cli.Comma
 				Serial:    serialInt,
 			})
 		}
-
 	}
 
 	sort.Slice(combinedVersions, func(i, j int) bool {

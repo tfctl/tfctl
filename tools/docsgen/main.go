@@ -145,7 +145,7 @@ func main() {
 }
 
 func renderOutput(output Outputs, name string, metadata any) error {
-	if err := os.MkdirAll(output.Folder, 0755); err != nil {
+	if err := os.MkdirAll(output.Folder, 0o755); err != nil {
 		return err
 	}
 

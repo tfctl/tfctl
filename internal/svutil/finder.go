@@ -17,7 +17,7 @@ import (
 // shown below. The list of StateVersions is in descending serial order, which
 // effectively makes it most recent first.
 func Resolve(versions []*tfe.StateVersion, specs ...string) ([]*tfe.StateVersion, error) {
-	var result = []*tfe.StateVersion{}
+	result := []*tfe.StateVersion{}
 
 	// specs is going to be zero or more (almost certainly max=2) SV specs.  A
 	// spec could be -

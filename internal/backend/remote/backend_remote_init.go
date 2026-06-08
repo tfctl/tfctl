@@ -23,7 +23,6 @@ type BackendRemoteOption = func(ctx context.Context, cmd *cli.Command, be *Backe
 // they have enough info to connect to a server.
 func BuckNaked() BackendRemoteOption {
 	return func(ctx context.Context, cmd *cli.Command, be *BackendRemote) error {
-
 		// THINK Revisit how host is determined across all backend types.
 		// If host is not set explicitly (we're BuckNaked) *AND* there is a host:
 		// entry in the config, use it.  Otherwise, just fall through and continue

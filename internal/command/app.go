@@ -18,7 +18,6 @@ import (
 )
 
 func InitApp(ctx context.Context, args []string) (*cli.Command, error) {
-
 	// Save the CWD at startup and then defer restoring it so we're tidy.
 	sd, _ := os.Getwd()
 	defer func() {

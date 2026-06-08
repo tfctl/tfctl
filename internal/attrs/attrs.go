@@ -31,7 +31,6 @@ type Attr struct {
 // Transform applies the attribute's transform spec to a value and returns the
 // transformed result.
 func (a *Attr) Transform(value interface{}) interface{} {
-
 	// TODO Currently only string values can be transformed.
 	result, ok := value.(string)
 	if !ok {
@@ -136,7 +135,6 @@ func (a *AttrList) Set(value string) error {
 	log.Debugf("specs split: specs=%v", specs)
 specloop:
 	for _, spec := range specs {
-
 		// Default to including the attribute, assuming it is a child of the
 		// .attributes key of the JSON object.
 		attr := Attr{
@@ -206,7 +204,6 @@ specloop:
 
 		*a = append(*a, attr)
 		log.Tracef("attr appended: len=%d", len(*a))
-
 	}
 
 	return nil

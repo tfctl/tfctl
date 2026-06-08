@@ -123,7 +123,6 @@ func SliceDiceSpit(raw bytes.Buffer,
 	parent string,
 	w io.Writer,
 	postProcess func([]map[string]interface{}) error) {
-
 	// Default to stdout.
 	if w == nil {
 		w = os.Stdout
@@ -253,12 +252,7 @@ func SliceDiceSpit(raw bytes.Buffer,
 // TableWriter renders the result set in a tabular form honoring color,
 // titles and padding options. Output is written to w. If w is nil, os.Stdout
 // is used.
-func TableWriter(
-	resultSet []map[string]interface{},
-	attrs attrs.AttrList,
-	cmd *cli.Command,
-	w io.Writer) {
-
+func TableWriter(resultSet []map[string]interface{}, attrs attrs.AttrList, cmd *cli.Command, w io.Writer) {
 	if w == nil {
 		w = os.Stdout
 	}
@@ -354,8 +348,24 @@ func TableWriter(
 
 // flattenState takes the state schema of each entry and flattens it into a
 // schema with parent and attributes. This is done so that we can have a common
-// schema for all the different types of resources.
+// schema for all the different types of resources. Note that this schema can be
+// extremely wide and complex. There will be a unique schema for each resource
+// type and, with the addition of aggregated sq, even more complexity is
+// expected, doubly so if multiple providers are represented in those states.
 func flattenState(resources gjson.Result, short bool) bytes.Buffer {
+	flatResources := flattenStateRows(resources, short)
+
+	jsonBytes, err := json.Marshal(flatResources)
+	if err != nil {
+		log.Errorf("flattenState marshal: %v", err)
+		return *bytes.NewBuffer([]byte{})
+	}
+
+	raw := *bytes.NewBuffer(jsonBytes)
+	return raw
+}
+
+func flattenStateRows(resources gjson.Result, short bool) []map[string]interface{} {
 	var flatResources []map[string]interface{}
 
 	for _, resource := range resources.Array() {
@@ -403,14 +413,18 @@ func flattenState(resources gjson.Result, short bool) bytes.Buffer {
 		}
 	}
 
-	jsonBytes, err := json.Marshal(flatResources)
-	if err != nil {
-		log.Errorf("flattenState marshal: %v", err)
-		return *bytes.NewBuffer([]byte{})
+	return flatResources
+}
+
+// FlattenTerraformState flattens a full Terraform state document into a row
+// set compatible with SliceDiceSpit filtering and rendering.
+func FlattenTerraformState(doc []byte, short bool) ([]map[string]interface{}, error) {
+	resources := gjson.ParseBytes(doc).Get("resources")
+	if !resources.Exists() {
+		return []map[string]interface{}{}, nil
 	}
 
-	raw := *bytes.NewBuffer(jsonBytes)
-	return raw
+	return flattenStateRows(resources, short), nil
 }
 
 // getColors returns configured color values for table rendering. Each color is

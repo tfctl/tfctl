@@ -15,7 +15,6 @@ import (
 // TODO Doesn't belong in this package.
 // THINK Needs to take a CacheEntry.
 func Hitter(be *BackendRemote, url string) (bytes.Buffer, error) {
-
 	if err := PurgeCache(); err != nil {
 		log.WithError(err).Warn("failed to purge cache")
 	}

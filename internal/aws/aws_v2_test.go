@@ -166,7 +166,7 @@ func TestLoadAWSConfig_MultipleOptions(t *testing.T) {
 
 // TestLoadAWSConfig_ContextCancellation verifies that LoadAWSConfig
 // respects context cancellation.
-func TestLoadAWSConfig_ContextCancellation(t *testing.T) {
+func TestLoadAWSConfig_ContextCancellation(_ *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 

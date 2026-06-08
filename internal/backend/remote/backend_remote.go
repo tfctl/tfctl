@@ -155,7 +155,6 @@ func (be *BackendRemote) DiffStates(ctx context.Context, cmd *cli.Command) ([][]
 // 4. non-namespaced host entry from tfctl config file (host)
 // 5. If no host is provided, defaults to app.terraform.io.
 func (be *BackendRemote) Host() string {
-
 	var host string
 
 	// Precedence 1: --host flag
@@ -188,7 +187,6 @@ func (be *BackendRemote) Host() string {
 // 3. namespaced org entry from tfctl config file (backend.remote.org)
 // 4. non-namespaced org entry from tfctl config file (org)
 func (be *BackendRemote) Organization() (string, error) {
-
 	var org string
 
 	// Precedence 1: --org flag

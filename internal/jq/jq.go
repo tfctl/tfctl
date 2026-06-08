@@ -17,7 +17,8 @@ import (
 // only rows where the expression evaluates to a truthy value.
 func FilterDatasetJQ(candidates gjson.Result,
 	attrs attrs.AttrList,
-	querySpec string) ([]map[string]interface{}, error) {
+	querySpec string,
+) ([]map[string]interface{}, error) {
 	//nolint:prealloc // We don't know resulting len before applying the query.
 	var filteredResults []map[string]interface{}
 

@@ -26,7 +26,7 @@ func GlobalFlagsValidator(ctx context.Context, c *cli.Command) error {
 }
 
 func OutputValidator(value any) error {
-	var validOutputFlagValues = []string{"text", "json", "raw", "yaml"}
+	validOutputFlagValues := []string{"text", "json", "raw", "yaml"}
 	valid := false
 	for _, v := range validOutputFlagValues {
 		if v == value {

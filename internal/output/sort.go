@@ -13,7 +13,6 @@ func SortDataset(resultSet []map[string]interface{}, spec string) {
 	fields := strings.Split(spec, ",")
 
 	sort.SliceStable(resultSet, func(one, two int) bool {
-
 		for _, field := range fields {
 			ascending := true
 			if strings.HasPrefix(field, "-") {
@@ -61,7 +60,6 @@ func SortDataset(resultSet []map[string]interface{}, spec string) {
 				}
 				return compareOneStr > compareTwoStr
 			}
-
 		}
 		return false
 	})

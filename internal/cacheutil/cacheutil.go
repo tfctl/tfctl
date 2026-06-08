@@ -105,7 +105,6 @@ func EntryPath(subdirs []string, clearKey string) (string, bool) {
 // Purge removes stale cache files and then clears out empty directories.
 // If hours <= 0 or we cannot resolve the cache root, we leave everything alone.
 func Purge(hours int) error {
-
 	if hours <= 0 {
 		log.Debug("cache cleaning disabled")
 		return nil
