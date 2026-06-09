@@ -8,7 +8,7 @@ Query Terraform state files.
 
 # USAGE
 
-`tfctl sq [RootDir...] [options]`
+`tfctl sq [RootDir] [options]`
 
 
 # OPTIONS
@@ -59,7 +59,7 @@ There is also a feature-rich syntax for transforming attribute values. See [Attr
 
 ## NOTES
 
-- `sq` operates against one or more IaC root directories.  When multiple [RootDir] values are provided, results are aggregated across all directories.  Defaults to CWD when not provided.
+- `sq` operates against an IaC root directory (defaults to CWD when not provided).
 
 - When using encrypted state, `sq` will prompt for a passphrase or use `TF_VAR_passphrase`.
 
