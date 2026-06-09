@@ -17,6 +17,8 @@
 
 **Multiple Backend Support** - Works with HCP Terraform, Terraform Enterprise, local state files, S3 backends, and module registries.
 
+**Aggregated State Files** - Query resources across multiple state files and aggregate into one result set. Supports mixed backend types.
+
 **Fast Performance** - Built-in Go with concurrent operations and intelligent caching.
 
 **Flexible Output** - Filter, sort, and transform results as JSON, YAML, or formatted tables. Use that output to drive automation workflows. jq-style querying is also available.

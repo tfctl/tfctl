@@ -20,7 +20,7 @@ tfctl has a rich collection of flags available to each command. Many of these fl
 
 ## Usage
 
-Unless noted otherwise in the command-specific documentation, flags and arguments can appear in any order _except_ for specifying the optional IaC root directory. That argument, if used, _must_ appear immediately following the command.
+Unless noted otherwise in the command-specific documentation, flags and arguments can appear in any order _except_ for specifying the optional IaC root directory. That argument, if used, _must_ appear immediately following the command.  For commands that support aggregate mode (like `sq`), multiple [RootDir] values can be provided, which will aggregate results across all directories.
 
 ```sh
 # Query the current state assuming the CWD is the
@@ -30,6 +30,9 @@ tfctl sq --sort resource
 # Query the current state of a specific IaC root
 # directory that might not be CWD.
 tfctl sq ${HOME}/myproject/iac --sort name
+
+# Aggregate state across multiple IaC root directories.
+tfctl sq ${HOME}/project1/iac ${HOME}/project2/iac --sort name
 ```
 
 Conflicting flags and arguments will often be silently ignored. For example, the `--titles` flag is only used in text output mode. If `--titles` is used alongside, for example, `--output json`, it is silently ignored.

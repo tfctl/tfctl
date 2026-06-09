@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## v1.5.0 - 2026-06-09
+
+- Added aggregated states for --sq. Multiple IAC roots can now be specified and the results of each will be aggregated into one result set.  For example - `tfctl sq ./iacdir1 ./iacdir2`.
 
 ### Chores
 
