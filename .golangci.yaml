@@ -21,7 +21,7 @@ linters:
       min-complexity: 15
     godot:
       scope: all
-      period: true
+      period: false
     # revive:
     #   rules:
     #     - name: dot-imports

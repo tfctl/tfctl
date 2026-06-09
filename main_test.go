@@ -11,40 +11,6 @@ import (
 	"github.com/tfctl/tfctl/internal/config"
 )
 
-func TestNormalizeCommandAlias(t *testing.T) {
-	tests := []struct {
-		name     string
-		args     []string
-		expected []string
-	}{
-		{
-			name:     "summarize becomes ps",
-			args:     []string{"tfctl", "summarize", "-"},
-			expected: []string{"tfctl", "ps", "-"},
-		},
-		{
-			name:     "ps stays ps",
-			args:     []string{"tfctl", "ps", "-"},
-			expected: []string{"tfctl", "ps", "-"},
-		},
-		{
-			name:     "empty args unchanged",
-			args:     nil,
-			expected: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := normalizeCommandAlias(append([]string(nil), tt.args...))
-
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("normalizeCommandAlias(%v) = %v, want %v", tt.args, got, tt.expected)
-			}
-		})
-	}
-}
-
 func TestDeduplicateFlags(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -334,28 +300,6 @@ func TestProcessCommandArgs_PsSkipsExplicitSet(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("processCommandArgs(%v) = %v, want %v", args, got, want)
-	}
-}
-
-func TestProcessCommandArgs_SummarizeMatchesPs(t *testing.T) {
-	originalConfig := config.Config
-	t.Cleanup(func() {
-		config.Config = originalConfig
-	})
-
-	config.Config = config.Type{
-		Data: map[string]interface{}{
-			"ps": map[string]interface{}{
-				"defaults": []interface{}{"--output text"},
-			},
-		},
-	}
-
-	psArgs := processCommandArgs([]string{"tfctl", "ps"})
-	summarizeArgs := processCommandArgs(normalizeCommandAlias([]string{"tfctl", "summarize"}))
-
-	if !reflect.DeepEqual(summarizeArgs, psArgs) {
-		t.Errorf("summarize args = %v, want %v", summarizeArgs, psArgs)
 	}
 }
 
@@ -697,6 +641,31 @@ func TestProcessCommandArgs_ExpandsAttrsAndFilterPresets_WithRootDir(t *testing.
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("processCommandArgs attrs+filter expansion got %v, want %v", got, want)
+	}
+}
+
+func TestProcessCommandArgs_SqMultiRoot_InsertsAfterRoots(t *testing.T) {
+	originalConfig := config.Config
+	t.Cleanup(func() {
+		config.Config = originalConfig
+	})
+
+	config.Config = config.Type{
+		Data: map[string]interface{}{
+			"sq": map[string]interface{}{
+				"defaults": []interface{}{"--debug"},
+			},
+		},
+	}
+
+	root1 := t.TempDir()
+	root2 := t.TempDir()
+
+	got := processCommandArgs([]string{"tfctl", "sq", root1, root2, "--titles"})
+	want := []string{"tfctl", "sq", root1, root2, "--debug", "--titles"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("processCommandArgs sq multi-root got %v, want %v", got, want)
 	}
 }
 

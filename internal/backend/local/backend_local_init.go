@@ -107,9 +107,8 @@ func (be *BackendLocal) load(_ context.Context, _ *cli.Command) error {
 			log.Debugf("local backend config file %s does not exist, assuming no backend", tfFile)
 			be.Backend.Type = "local"
 			return nil
-		} else {
-			return fmt.Errorf("failed to read local config file: %w", err)
 		}
+		return fmt.Errorf("failed to read local config file: %w", err)
 	}
 
 	var temp BackendLocal

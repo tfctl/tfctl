@@ -122,7 +122,8 @@ func SliceDiceSpit(raw bytes.Buffer,
 	cmd *cli.Command,
 	parent string,
 	w io.Writer,
-	postProcess func([]map[string]interface{}) error) {
+	postProcess func([]map[string]interface{}) error,
+) {
 	// Default to stdout.
 	if w == nil {
 		w = os.Stdout
@@ -457,7 +458,7 @@ func getColors(key string) (header, even, odd lipgloss.TerminalColor) {
 
 // getCommonFields extracts common fields from a resource, excluding instances.
 func getCommonFields(resource gjson.Result) map[string]interface{} {
-	var common = make(map[string]interface{})
+	common := make(map[string]interface{})
 	for key, value := range resource.Map() {
 		if key != "instances" {
 			common[key] = value.Value()
@@ -478,7 +479,7 @@ func writeIntoFiles(cmd *cli.Command, data interface{}) {
 			return
 		}
 
-		if err := os.WriteFile(path2, jsonOutput, 0600); err != nil {
+		if err := os.WriteFile(path2, jsonOutput, 0o600); err != nil {
 			log.Errorf("SliceDiceSpit write file for json-into: %v", err)
 		}
 	}
@@ -490,7 +491,7 @@ func writeIntoFiles(cmd *cli.Command, data interface{}) {
 			return
 		}
 
-		if err := os.WriteFile(path2, yamlOutput, 0600); err != nil {
+		if err := os.WriteFile(path2, yamlOutput, 0o600); err != nil {
 			log.Errorf("SliceDiceSpit write file for yaml-into: %v", err)
 		}
 	}

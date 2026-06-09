@@ -91,7 +91,7 @@ func TestParseRootDir(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				tmpDir := t.TempDir()
 				tmpFile := filepath.Join(tmpDir, "file.txt")
-				err := os.WriteFile(tmpFile, []byte("test"), 0600)
+				err := os.WriteFile(tmpFile, []byte("test"), 0o600)
 				if err != nil {
 					t.Fatalf(
 						"failed to create temp file: %v",
@@ -162,7 +162,7 @@ func TestParseRootDir(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				tmpDir := t.TempDir()
 				subDir := filepath.Join(tmpDir, "subdir")
-				err := os.Mkdir(subDir, 0755)
+				err := os.Mkdir(subDir, 0o755)
 				if err != nil {
 					t.Fatalf(
 						"failed to create subdir: %v",

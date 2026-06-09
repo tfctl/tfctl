@@ -589,6 +589,35 @@ func TestFlattenState(t *testing.T) {
 	}
 }
 
+func TestFlattenTerraformState(t *testing.T) {
+	stateDoc := `{
+		"resources": [
+			{
+				"type": "aws_instance",
+				"name": "example",
+				"mode": "managed",
+				"instances": [
+					{
+						"id": "i-123",
+						"attributes": {"public_ip": "10.0.0.1"}
+					}
+				]
+			}
+		]
+	}`
+
+	rows, err := FlattenTerraformState([]byte(stateDoc), true)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+
+	rowBytes, err := json.Marshal(rows[0])
+	require.NoError(t, err)
+
+	parsed := gjson.ParseBytes(rowBytes)
+	require.Equal(t, "aws_instance.example", parsed.Get("resource").String())
+	require.Equal(t, "i-123", parsed.Get("id").String())
+}
+
 // TestGetCommonFieldsRobust uses gjson to test field extraction logic.
 func TestGetCommonFieldsRobust(t *testing.T) {
 	tests := []struct {

@@ -10,6 +10,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFormatIacrootForOutput(t *testing.T) {
+	tests := []struct {
+		name     string
+		iacroot  string
+		baseDir  string
+		relative bool
+		want     string
+	}{
+		{
+			name:     "absolute_when_relative_false",
+			iacroot:  "/tmp/a/b",
+			baseDir:  "/tmp/a",
+			relative: false,
+			want:     "/tmp/a/b",
+		},
+		{
+			name:     "relative_when_enabled",
+			iacroot:  "/tmp/a/b",
+			baseDir:  "/tmp/a",
+			relative: true,
+			want:     "b",
+		},
+		{
+			name:     "dot_when_same_path",
+			iacroot:  "/tmp/a",
+			baseDir:  "/tmp/a",
+			relative: true,
+			want:     ".",
+		},
+		{
+			name:     "fallback_when_basedir_empty",
+			iacroot:  "/tmp/a/b",
+			baseDir:  "",
+			relative: true,
+			want:     "/tmp/a/b",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, transformIacroot(tt.iacroot, tt.baseDir, tt.relative))
+		})
+	}
+}
+
 func TestChopPrefix_EmptyDataset(t *testing.T) {
 	data := []map[string]interface{}{}
 	chopPrefix(data)
@@ -144,4 +189,49 @@ func TestChopPrefix_DifferentLengths_PartialMatch(t *testing.T) {
 	assert.Equal(t, "..x.y", data[0]["resource"])
 	assert.Equal(t, "..prod.server1", data[1]["resource"])
 	assert.Equal(t, "..dev.server2", data[2]["resource"])
+}
+
+func TestParseSqRootArgs(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			name: "no_args",
+			args: []string{"tfctl", "sq"},
+			want: nil,
+		},
+		{
+			name: "flag_immediately_after_sq",
+			args: []string{"tfctl", "sq", "--attrs", "arn"},
+			want: []string{},
+		},
+		{
+			name: "single_root_then_flag",
+			args: []string{"tfctl", "sq", "dir1", "--attrs", "arn"},
+			want: []string{"dir1"},
+		},
+		{
+			name: "multiple_roots_then_flag",
+			args: []string{"tfctl", "sq", "dir1", "dir2", "~/dir3", "--attrs", "arn"},
+			want: []string{"dir1", "dir2", "~/dir3"},
+		},
+		{
+			name: "stops_at_double_dash",
+			args: []string{"tfctl", "sq", "dir1", "--", "--attrs", "arn"},
+			want: []string{"dir1"},
+		},
+		{
+			name: "alias_state_still_parses",
+			args: []string{"tfctl", "state", "dir1", "--attrs", "arn"},
+			want: []string{"dir1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, parseSqRootArgs(tt.args))
+		})
+	}
 }

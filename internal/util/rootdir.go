@@ -13,7 +13,6 @@ import (
 // any optional environment override. It returns an error if the fs entry does
 // not exist, is empty or is not a directory.
 func ParseRootDir(rootDir string) (string, string, error) {
-
 	if rootDir == "" {
 		return "", "", os.ErrInvalid
 	}

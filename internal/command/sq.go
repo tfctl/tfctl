@@ -9,22 +9,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/apex/log"
 	"github.com/urfave/cli/v3"
 
+	"github.com/tfctl/tfctl/internal/attrs"
 	"github.com/tfctl/tfctl/internal/backend"
 	"github.com/tfctl/tfctl/internal/config"
 	"github.com/tfctl/tfctl/internal/differ"
 	"github.com/tfctl/tfctl/internal/meta"
 	"github.com/tfctl/tfctl/internal/output"
 	"github.com/tfctl/tfctl/internal/state"
+	"github.com/tfctl/tfctl/internal/util"
 )
 
 // sqCommandAction is the action handler for the "sq" subcommand. It reads
-// Terraform state (including optional decryption), supports --tldr short-
-// circuit, and emits results per common flags.
+// Terraform state (including optional decryption),and emits results per flags.
 func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 	config.Config.Namespace = "sq"
 
@@ -36,66 +38,26 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	// Figure out what type of Backend we're in.
-	be, err := backend.NewBackend(ctx, *cmd)
-	if err != nil {
-		return err
-	}
-	log.Debugf("typBe: %v", be)
-
-	// Short circuit --diff mode.
-	if cmd.Bool("diff") {
-		if _, ok := be.(backend.SelfDiffer); ok {
-			states, diffErr := be.(backend.SelfDiffer).DiffStates(ctx, cmd)
-			if diffErr != nil {
-				log.Errorf("diff error: %v", diffErr)
-				return diffErr
-			}
-
-			return differ.Diff(ctx, cmd, states)
-		} else {
-			log.Debug("Backend does not implement SelfDiffer")
-		}
+	// Collect all the iacroot dirs passed as positional args (eg. after "sq" but
+	// before any flags). If none were passed, inject CWD.
+	roots := parseSqRootArgs(m.Args)
+	if len(roots) == 0 {
+		roots = []string{m.RootDir}
 	}
 
-	defaultAttrs := []string{"!.mode", "!.type", ".resource", "id", "name"}
+	// We'll ned to know if we're dealing with multiple roots at various spots.
+	multiRoot := len(roots) > 1
 
-	attrs := BuildAttrs(cmd, defaultAttrs...)
-	log.Debugf("attrs: %v", attrs)
-
-	var doc []byte
-	doc, err = be.State()
-	if err != nil {
-		return err
+	// --diff doesn't make sense with multiple roots because diffing two
+	// different states seems useless compared to diffing two versions of the
+	// same state.
+	if multiRoot && cmd.Bool("diff") {
+		return fmt.Errorf("--diff is not supported with multiple RootDir args")
 	}
 
-	// If the state is encrypted, there's a little more work to do.
-	var jsonData map[string]interface{}
-	if err := json.Unmarshal(doc, &jsonData); err == nil {
-		if _, exists := jsonData["encrypted_data"]; exists {
-			// First, look to the flag for passphrase value.
-			passphrase := cmd.String("passphrase")
-
-			// Issue 14 - Next look in env and use it if found.
-			if passphrase == "" {
-				passphrase = os.Getenv("TFCTL_PASSPHRASE")
-			}
-
-			// Finally, prompt for passphrase
-			if passphrase == "" {
-				passphrase, _ = state.GetPassphrase()
-			}
-
-			doc, err = state.DecryptOpenTofuState(doc, passphrase)
-			if err != nil {
-				return fmt.Errorf("failed to decrypt: %w", err)
-			}
-		}
-	}
-
-	var raw bytes.Buffer
-	raw.Write(doc)
-
+	// Setup helper to be run after dataset is in its final form and simply needs
+	// final cosmetic transformations.
+	// THINK USe this style or traditional helper?
 	postProcess := func(dataset []map[string]interface{}) error {
 		if cmd.Bool("chop") {
 			chopPrefix(dataset)
@@ -113,6 +75,116 @@ func sqCommandAction(ctx context.Context, cmd *cli.Command) error {
 		_ = cmd.Set("filter", filter)
 	}
 
+	// Add iacroot attrs if we're in multi-mode.
+	relativeIacroot := false
+	defaultAttrs := []string{"!.mode", "!.type", ".resource", "id", "name"}
+	if multiRoot {
+		defaultAttrs = append(defaultAttrs, `.iacroot`)
+		// Should the iacroot attribute be relative to CWD?
+		relativeIacroot, _ = config.GetBool("relative_iacroot", false)
+	}
+
+	attrs := BuildAttrs(cmd, defaultAttrs...)
+	if multiRoot {
+		includeIacrootAttribute(&attrs)
+	}
+
+	log.Debugf("attrs: %v", attrs)
+
+	// Save the original metadata so that we can transform it with root specific
+	// values as we iterate over the roots. This way, we keep the common or
+	// default metadata for each root.
+	originalMeta := GetMeta(cmd)
+	defer func() {
+		cmd.Metadata["meta"] = originalMeta
+	}()
+
+	// Preserve previous single-root --diff behavior while keeping the common
+	// root iteration path for non-diff output aggregation.
+	if cmd.Bool("diff") {
+		be, err := backend.NewBackend(ctx, *cmd)
+		if err != nil {
+			return err
+		}
+
+		if selfDiffer, ok := be.(backend.SelfDiffer); ok {
+			states, diffErr := selfDiffer.DiffStates(ctx, cmd)
+			if diffErr != nil {
+				log.Errorf("diff error: %v", diffErr)
+				return diffErr
+			}
+
+			return differ.Diff(ctx, cmd, states)
+		}
+
+		log.Debug("Backend does not implement SelfDiffer")
+	}
+
+	var combined []map[string]interface{}
+	resolvedPassphrase := ""
+
+	// Iterate over all the roots, combining each state into the common dataset.
+	// Each root's state is processed independently up through the point of
+	// flattening, at which point we have uniform representations that are then
+	// aggregated.
+	for _, root := range roots {
+		wd, env, err := util.ParseRootDir(root)
+		if err != nil {
+			return fmt.Errorf("failed to parse rootDir (%s): %w", root, err)
+		}
+
+		m2 := originalMeta
+		m2.RootDir = wd
+		m2.Env = env
+		cmd.Metadata["meta"] = m2
+
+		be, err := backend.NewBackend(ctx, *cmd)
+		if err != nil {
+			return err
+		}
+		log.Debugf("typBe: %v", be)
+
+		doc, err := be.State()
+		if err != nil {
+			return err
+		}
+
+		doc, resolvedPassphrase, err = decryptStateIfNeeded(cmd, doc, resolvedPassphrase)
+		if err != nil {
+			return err
+		}
+
+		rows, err := output.FlattenTerraformState(doc, !cmd.Bool("short"))
+		if err != nil {
+			return err
+		}
+
+		if multiRoot {
+			iacroot := transformIacroot(wd, m.StartingDir, relativeIacroot)
+
+			for i := range rows {
+				rows[i]["iacroot"] = iacroot
+
+				if rowAttrs, ok := rows[i]["attributes"].(map[string]interface{}); ok {
+					rowAttrs["iacroot"] = iacroot
+				} else if rowAttrs, ok := rows[i]["attributes"].(map[string]any); ok {
+					rowAttrs["iacroot"] = iacroot
+				} else if rows[i]["attributes"] == nil {
+					rows[i]["attributes"] = map[string]interface{}{"iacroot": iacroot}
+				}
+			}
+		}
+
+		combined = append(combined, rows...)
+	}
+
+	jsonBytes, err := json.Marshal(combined)
+	if err != nil {
+		return err
+	}
+
+	var raw bytes.Buffer
+	raw.Write(jsonBytes)
 	output.SliceDiceSpit(raw, attrs, cmd, "", os.Stdout, postProcess)
 
 	return nil
@@ -288,4 +360,85 @@ func chopPrefix(dataset []map[string]interface{}) {
 			}
 		}
 	}
+}
+
+func decryptStateIfNeeded(cmd *cli.Command, doc []byte, passphrase string) ([]byte, string, error) {
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(doc, &jsonData); err != nil {
+		return doc, passphrase, nil
+	}
+	if _, exists := jsonData["encrypted_data"]; !exists {
+		return doc, passphrase, nil
+	}
+
+	if passphrase == "" {
+		// First, look to the flag for passphrase value.
+		passphrase = cmd.String("passphrase")
+
+		// Issue 14 - Next look in env and use it if found.
+		if passphrase == "" {
+			passphrase = os.Getenv("TFCTL_PASSPHRASE")
+		}
+
+		// Finally, prompt for passphrase.
+		if passphrase == "" {
+			prompted, _ := state.GetPassphrase()
+			passphrase = prompted
+		}
+	}
+
+	decrypted, err := state.DecryptOpenTofuState(doc, passphrase)
+	if err != nil {
+		return nil, passphrase, fmt.Errorf("failed to decrypt: %w", err)
+	}
+
+	return decrypted, passphrase, nil
+}
+
+func includeIacrootAttribute(all *attrs.AttrList) {
+	if all == nil {
+		return
+	}
+
+	for i := range *all {
+		if (*all)[i].OutputKey == "iacroot" {
+			(*all)[i].Include = true
+			return
+		}
+	}
+
+	// If iacroot isn't already present, add a root-level accessor.
+	//nolint:errcheck // AttrList.Set errors are logged internally
+	all.Set(".iacroot")
+}
+
+func parseSqRootArgs(args []string) []string {
+	if len(args) < 3 {
+		return nil
+	}
+
+	roots := []string{}
+	for i := 2; i < len(args); i++ {
+		tok := args[i]
+		if tok == "--" || strings.HasPrefix(tok, "-") {
+			break
+		}
+		roots = append(roots, tok)
+	}
+
+	return roots
+}
+
+// transformIacroot transforms the iacroot value based on the relative flag.
+func transformIacroot(iacroot string, baseDir string, relative bool) string {
+	if !relative || iacroot == "" || baseDir == "" {
+		return iacroot
+	}
+
+	rel, err := filepath.Rel(baseDir, iacroot)
+	if err != nil {
+		return iacroot
+	}
+
+	return rel
 }
