@@ -159,7 +159,7 @@ subcommands:
     alias: state
     short: State Query
     description: Query Terraform state files.
-    usage: tfctl sq [RootDir] [options]
+    usage: tfctl sq [RootDir...] [options]
     flags:
       - *attrs
       - id: chop
@@ -195,14 +195,14 @@ subcommands:
     examples:
       - command: tfctl sq --attrs created-at
         description: Display state file in current directory and include Created At information.
-      - command: tfctl sq --titles
-        description: Display state file in current directory and include column headings.
+      - command: tfctl sq iac1/ iac2/
+        description: Aggregates the state files in the `iac1/` and `iac2/` directories and displays combined results.
       - command: tfctl sq --concrete --filter 'resource@vpc'
         description: Display only concrete resources with "vpc" in their type or name.
       - command: tfctl sq --sv -3 --output json
         description: Display the third most recent state file version in JSON format.
     notes:
-      - "`sq` operates against an IaC root directory (defaults to CWD when not provided)."
+      - "`sq` operates against one or more IaC root directories.  When multiple [RootDir] values are provided, results are aggregated.  Defaults to CWD when not provided."
       - "When using encrypted state, `sq` will prompt for a passphrase or use `TF_VAR_passphrase`."
 
   - id: svq

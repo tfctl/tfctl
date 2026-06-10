@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.1 - 2026-06-09
+
+### Fixed
+
+- Eliminated double read of state files when compiling SV candidates list.
+
+### Chores
+
+- Added backend_local tests.
+- Corrected sq docs.
+- Lint cleanup.
+
 ## v1.5.0 - 2026-06-09
 
 - Added aggregated states for --sq. Multiple IAC roots can now be specified and the results of each will be aggregated into one result set.  For example - `tfctl sq ./iacdir1 ./iacdir2`.

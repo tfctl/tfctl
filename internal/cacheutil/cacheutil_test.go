@@ -189,7 +189,7 @@ func TestEnsureBaseDir_CreatesDirectory(t *testing.T) {
 func TestEnsureBaseDir_ExistingDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	cacheDir := filepath.Join(tmpDir, "cache")
-	err := os.MkdirAll(cacheDir, 0o755)
+	err := os.MkdirAll(cacheDir, 0o750)
 	require.NoError(t, err)
 
 	t.Setenv("TFCTL_CACHE_DIR", cacheDir)
@@ -242,7 +242,7 @@ func TestEntryPath_ExistingEntry(t *testing.T) {
 
 	// Create subdirectory and file
 	subdir := filepath.Join(tmpDir, "subdir")
-	err := os.MkdirAll(subdir, 0o755)
+	err := os.MkdirAll(subdir, 0o750)
 	require.NoError(t, err)
 
 	// Create file with encoded key name
@@ -289,7 +289,7 @@ func TestRead_SuccessfulRead(t *testing.T) {
 
 	// Create cache file
 	subdir := filepath.Join(tmpDir, "data")
-	err := os.MkdirAll(subdir, 0o755)
+	err := os.MkdirAll(subdir, 0o750)
 	require.NoError(t, err)
 
 	testData := []byte("cached data content")
@@ -319,7 +319,7 @@ func TestRead_TrimsWhitespace(t *testing.T) {
 
 	// Create cache file with whitespace
 	subdir := filepath.Join(tmpDir, "data")
-	err := os.MkdirAll(subdir, 0o755)
+	err := os.MkdirAll(subdir, 0o750)
 	require.NoError(t, err)
 
 	testData := []byte("  \n  cached content  \n  ")
@@ -557,7 +557,7 @@ func TestPurge_NestedDirectories(t *testing.T) {
 
 	// Create nested directory structure
 	nestedDir := filepath.Join(tmpDir, "level1", "level2")
-	err := os.MkdirAll(nestedDir, 0o755)
+	err := os.MkdirAll(nestedDir, 0o750)
 	require.NoError(t, err)
 
 	// Create old file in nested dir

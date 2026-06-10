@@ -80,7 +80,7 @@ func TestParseRootDir(t *testing.T) {
 		},
 		{
 			name: "nonexistent_directory",
-			setupDir: func(t *testing.T) string {
+			setupDir: func(_ *testing.T) string {
 				return "/nonexistent/path/that/does/not/exist"
 			},
 			wantErr: true,
@@ -132,7 +132,7 @@ func TestParseRootDir(t *testing.T) {
 		},
 		{
 			name: "empty_root_dir",
-			setupDir: func(t *testing.T) string {
+			setupDir: func(_ *testing.T) string {
 				return ""
 			},
 			wantErr: true,
@@ -162,7 +162,7 @@ func TestParseRootDir(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				tmpDir := t.TempDir()
 				subDir := filepath.Join(tmpDir, "subdir")
-				err := os.Mkdir(subDir, 0o755)
+				err := os.Mkdir(subDir, 0o750)
 				if err != nil {
 					t.Fatalf(
 						"failed to create subdir: %v",

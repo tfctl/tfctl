@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/apex/log"
 	tfe "github.com/hashicorp/go-tfe"
@@ -103,15 +104,83 @@ func (be *BackendLocal) State() ([]byte, error) {
 	return states[0], nil
 }
 
-// StateVersions implements backend.Backend. It scans be.RootDir for state and
-// backup files, parses them, and creates minimal tfe.StateVersion with ID as
-// filename, CreatedAt from file timestamp, and Serial from the document.
-// Other Backend types will cache these results in the BackendStruct for
-// efficiencies sake. We're not doing that here, since local filesystem access
-// should be lickity split.
-func (be *BackendLocal) StateVersions(augmenter ...func(context.Context, *cli.Command, *tfe.StateVersionListOptions) error) ([]*tfe.StateVersion, error) {
-	var versions []*tfe.StateVersion
+// stateFile pairs a discovered state version with the raw document bytes that
+// scan() already read from disk, so callers can avoid double reading the file.
+type stateFile struct {
+	version *tfe.StateVersion
+	body    []byte
+}
 
+// StateVersions implements backend.Backend. It scans be.RootDir for state and
+// backup files and returns minimal tfe.StateVersion metadata for each.
+func (be *BackendLocal) StateVersions(augmenter ...func(context.Context, *cli.Command, *tfe.StateVersionListOptions) error) ([]*tfe.StateVersion, error) {
+	files, err := be.scan()
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]*tfe.StateVersion, 0, len(files))
+	for _, f := range files {
+		versions = append(versions, f.version)
+	}
+
+	return versions, nil
+}
+
+func (be *BackendLocal) States(specs ...string) ([][]byte, error) {
+	var results [][]byte
+
+	files, err := be.scan()
+	if err != nil {
+		return nil, err
+	}
+
+	// Index the bodies scan() already read so resolved versions can be served
+	// without a second trip to disk.
+	candidates := make([]*tfe.StateVersion, 0, len(files))
+	bodies := make(map[string][]byte, len(files))
+	for _, f := range files {
+		candidates = append(candidates, f.version)
+		bodies[f.version.JSONDownloadURL] = f.body
+	}
+
+	versions, err := svutil.Resolve(candidates, specs...)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("versions: %v", versions)
+
+	// Now pound through the found versions and return each of their state bodies.
+	for _, v := range versions {
+		body, ok := bodies[v.JSONDownloadURL]
+		if !ok {
+			// A file-path spec (svutil.resolveFileSpec) resolves to a path that
+			// was never globbed, so it isn't in the scan. Read it directly.
+			if body, err = os.ReadFile(v.JSONDownloadURL); err != nil {
+				return nil, fmt.Errorf("failed to read state file: %w", err)
+			}
+		}
+		results = append(results, body)
+	}
+
+	return results, nil
+}
+
+func (be *BackendLocal) String() string {
+	return be.Backend.Config.Path
+}
+
+func (be *BackendLocal) Type() (string, error) {
+	return be.Backend.Type, nil
+}
+
+// scan globs be.RootDir (honoring any .terraform/environment workspace
+// override) for state and backup files, reading each exactly once. It returns
+// them newest-first by mod time, carrying both the tfe.StateVersion metadata
+// (ID from filename, CreatedAt from file timestamp, Serial from the document)
+// and the raw body. Other Backend types cache their listings; we don't here,
+// since local filesystem access should be lickity split.
+func (be *BackendLocal) scan() ([]stateFile, error) {
 	// If there's a .terraform/environment file, we need to use that to
 	// determine the workspace directory.
 	if be.EnvOverride == "" {
@@ -146,26 +215,13 @@ func (be *BackendLocal) StateVersions(augmenter ...func(context.Context, *cli.Co
 	sort.Slice(infos, func(i, j int) bool {
 		return infos[i].mod > infos[j].mod
 	})
-	var sortedPaths []string
+
+	var found []stateFile
 	for _, info := range infos {
-		sortedPaths = append(sortedPaths, info.path)
-	}
-
-	paths := sortedPaths /*[]string{
-		be.stateFilePath(),
-		be.stateFilePath(".backup"),
-	}*/
-
-	for _, p := range paths {
-		f, err := os.Open(p)
+		// Read the body once; serial is parsed from it and the bytes are retained
+		// so States() doesn't have to read the file again.
+		body, err := os.ReadFile(info.path)
 		if err != nil {
-			continue
-		}
-
-		// Get the timestamp.
-		stat, err := f.Stat()
-		if err != nil {
-			f.Close()
 			continue
 		}
 
@@ -173,51 +229,22 @@ func (be *BackendLocal) StateVersions(augmenter ...func(context.Context, *cli.Co
 		var doc struct {
 			Serial int64 `json:"serial"`
 		}
-		dec := json.NewDecoder(f)
-		if err := dec.Decode(&doc); err != nil {
-			f.Close()
+
+		if err := json.Unmarshal(body, &doc); err != nil {
 			continue
 		}
-		f.Close()
 
-		versions = append(versions, &tfe.StateVersion{
-			ID:        filepath.Base(p),
-			CreatedAt: stat.ModTime(),
-			Serial:    doc.Serial,
-			// We're stealing this attribute and using it as the full path to state.
-			JSONDownloadURL: p,
+		found = append(found, stateFile{
+			version: &tfe.StateVersion{
+				ID:        filepath.Base(info.path),
+				CreatedAt: time.Unix(0, info.mod),
+				Serial:    doc.Serial,
+				// We're stealing this attribute and using it as the full path to state.
+				JSONDownloadURL: info.path,
+			},
+			body: body,
 		})
 	}
 
-	return versions, nil
-}
-
-func (be *BackendLocal) States(specs ...string) ([][]byte, error) {
-	var results [][]byte
-
-	candidates, _ := be.StateVersions()
-	versions, err := svutil.Resolve(candidates, specs...)
-	if err != nil {
-		return nil, err
-	}
-	log.Debugf("versions: %v", versions)
-
-	// Now pound through the found versions and return each of their state bodies.
-	for _, v := range versions {
-		body, err := os.ReadFile(v.JSONDownloadURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read state file: %w", err)
-		}
-		results = append(results, body)
-	}
-
-	return results, nil
-}
-
-func (be *BackendLocal) String() string {
-	return be.Backend.Config.Path
-}
-
-func (be *BackendLocal) Type() (string, error) {
-	return be.Backend.Type, nil
+	return found, nil
 }

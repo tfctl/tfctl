@@ -353,7 +353,7 @@ func TestTableWriter(t *testing.T) {
 			name:      "empty result set returns early",
 			resultSet: []map[string]interface{}{},
 			attrs:     attrs.AttrList{},
-			checkFunc: func(t *testing.T, rs []map[string]interface{}, a attrs.AttrList) {
+			checkFunc: func(t *testing.T, rs []map[string]interface{}, _ attrs.AttrList) {
 				// Empty result set should cause early return
 				assert.Empty(t, rs)
 			},
@@ -373,7 +373,7 @@ func TestTableWriter(t *testing.T) {
 					Include:   true,
 				},
 			},
-			checkFunc: func(t *testing.T, rs []map[string]interface{}, a attrs.AttrList) {
+			checkFunc: func(t *testing.T, rs []map[string]interface{}, _ attrs.AttrList) {
 				assert.Len(t, rs, 1)
 				assert.Equal(t, "resource1", rs[0]["name"])
 				assert.Equal(t, "r-123", rs[0]["id"])
@@ -394,7 +394,7 @@ func TestTableWriter(t *testing.T) {
 					Include:   false,
 				},
 			},
-			checkFunc: func(t *testing.T, rs []map[string]interface{}, a attrs.AttrList) {
+			checkFunc: func(t *testing.T, _ []map[string]interface{}, a attrs.AttrList) {
 				// Check that attributes with Include=false are skipped
 				included := 0
 				for _, attr := range a {

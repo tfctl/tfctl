@@ -79,7 +79,7 @@ func EnsureBaseDir() (string, bool, error) {
 		return "", false, nil
 	}
 
-	if err := os.MkdirAll(base, 0o755); err != nil { //nolint:mnd // Standard directory permissions
+	if err := os.MkdirAll(base, 0o750); err != nil { //nolint:mnd // Standard directory permissions
 		return base, false, fmt.Errorf("failed to create cache base directory: %w", err)
 	}
 	log.Debugf("created cache dir: path=%s", base)
@@ -119,7 +119,11 @@ func Purge(hours int) error {
 	if err != nil {
 		return fmt.Errorf("failed to open cache root: %w", err)
 	}
-	defer root.Close()
+	defer func() {
+		if err := root.Close(); err != nil {
+			log.WithError(err).Warn("failed to close cache root")
+		}
+	}()
 
 	maxAge := time.Duration(hours) * time.Hour
 
@@ -264,7 +268,7 @@ func Write(subdirs []string, clearKey string, data []byte) error {
 	dir := filepath.Join(append([]string{base}, subdirs...)...)
 	// We build the directory tree lazily so cache misses do not need any upfront
 	// setup work.
-	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:mnd // Standard directory permissions
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd // Standard directory permissions
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 	p := filepath.Join(dir, encoded)
